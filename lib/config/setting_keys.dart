@@ -52,10 +52,14 @@ enum AppSettings<T> {
   ),
   displayChatDetailsColumn('chat.fluffy.display_chat_details_column', false),
   // AppConfig-mirrored settings
-  applicationName<String>('chat.fluffy.application_name', 'FluffyChat'),
+  // [vent] standalone app identity — "Mio Chat". Only surfaces in the
+  // standalone build; never rendered inside the Vent app, which embeds
+  // ChatList under its own MaterialApp/theme. See VENT_CHANGES.md.
+  applicationName<String>('chat.fluffy.application_name', 'Mio Chat'),
   defaultHomeserver<String>('chat.fluffy.default_homeserver', 'matrix.org'),
   // colorSchemeSeed stored as ARGB int
-  colorSchemeSeedInt<int>('chat.fluffy.color_scheme_seed', 0xFF5625BA),
+  // [vent] black seed → monochrome scheme for the B&W prototype theme.
+  colorSchemeSeedInt<int>('chat.fluffy.color_scheme_seed', 0xFF000000),
   emojiSuggestionLocale<String>('emoji_suggestion_locale', ''),
   enableSoftLogout<bool>('chat.fluffy.enable_soft_logout', false),
   enableMatrixNativeOIDC<bool>('chat.fluffy.enable_matrix_native_oidc', false),

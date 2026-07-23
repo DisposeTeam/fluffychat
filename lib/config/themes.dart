@@ -48,7 +48,10 @@ abstract class FluffyThemes {
     final colorScheme = ColorScheme.fromSeed(
       brightness: brightness,
       seedColor: seed ?? Color(AppSettings.colorSchemeSeedInt.value),
-      dynamicSchemeVariant: DynamicSchemeVariant.rainbow,
+      // [vent] monochrome variant → black & white "prototype" theme for the
+      // standalone Mio Chat build. Does not affect the Vent app, which themes
+      // the embedded ChatList via its own MaterialApp. See VENT_CHANGES.md.
+      dynamicSchemeVariant: DynamicSchemeVariant.monochrome,
     );
     final isColumnMode = FluffyThemes.isColumnMode(context);
     final dividerColor = brightness == Brightness.dark
