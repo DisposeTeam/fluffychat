@@ -8,6 +8,7 @@ import 'dart:async';
 import 'package:collection/collection.dart';
 import 'package:cross_file/cross_file.dart';
 import 'package:fluffychat/config/app_config.dart';
+import 'package:fluffychat/config/vent_integration.dart';
 import 'package:fluffychat/l10n/l10n.dart';
 import 'package:fluffychat/pages/chat_list/chat_list_view.dart';
 import 'package:fluffychat/utils/error_reporter.dart';
@@ -149,9 +150,16 @@ class ChatListController extends State<ChatList>
     }
   }
 
-  List<Room> get filteredRooms => Matrix.of(
+  /// [vent] Every room the host app allows to be shown. Room counts, tags and
+  /// the empty state all read this instead of `client.rooms` so a hidden room
+  /// cannot leak in through one of them. See VentIntegration.
+  List<Room> get visibleRooms => Matrix.of(
     context,
-  ).client.rooms.where(getRoomFilterByActiveFilter(activeFilter)).toList();
+  ).client.rooms.where(VentIntegration.isRoomVisible).toList();
+
+  List<Room> get filteredRooms => visibleRooms
+      .where(getRoomFilterByActiveFilter(activeFilter))
+      .toList();
 
   bool isSearchMode = false;
   Future<QueryPublicRoomsResponse>? publicRoomsResponse;
@@ -809,7 +817,7 @@ class ChatListController extends State<ChatList>
 
   void _updateRoomTags([_]) {
     roomTags.clear();
-    for (final room in Matrix.of(context).client.rooms) {
+    for (final room in visibleRooms) {
       for (final tag in room.tags.keys) {
         if (tag.startsWith('u.')) roomTags[tag] = (roomTags[tag] ?? 0) + 1;
       }

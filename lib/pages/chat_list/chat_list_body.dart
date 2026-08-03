@@ -4,6 +4,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 import 'package:fluffychat/config/setting_keys.dart';
+import 'package:fluffychat/config/vent_integration.dart';
 import 'package:fluffychat/l10n/l10n.dart';
 import 'package:fluffychat/pages/chat_list/chat_list.dart';
 import 'package:fluffychat/pages/chat_list/chat_list_item.dart';
@@ -67,6 +68,11 @@ class ChatListViewBody extends StatelessWidget {
           .where((s) => s.hasRoomUpdate)
           .rateLimit(const Duration(seconds: 1)),
       builder: (context, _) {
+        // [vent] Rooms hidden by the host app must not count towards "does this
+        // account have any chats at all", or a user whose only room is hidden
+        // gets filter chips and a "no more chats" message instead of the
+        // empty state.
+        final hasVisibleRooms = controller.visibleRooms.isNotEmpty;
         final rooms = controller.filteredRooms
             .where(
               (room) =>
@@ -128,7 +134,7 @@ class ChatListViewBody extends StatelessWidget {
                           ),
                   ),
                 ],
-                if (client.rooms.isNotEmpty && !controller.isSearchMode)
+                if (hasVisibleRooms && !controller.isSearchMode)
                   Container(
                     height: 36 + 8 + 8,
                     padding: EdgeInsets.symmetric(vertical: 8),
@@ -184,41 +190,53 @@ class ChatListViewBody extends StatelessWidget {
                 if (client.prevBatch != null &&
                     rooms.isEmpty &&
                     !controller.isSearchMode) ...[
-                  Column(
-                    mainAxisAlignment: .center,
-                    children: [
-                      Stack(
-                        alignment: Alignment.center,
+                  // [vent] Let the host app render the empty state in its own
+                  // design language; fall back to FluffyChat's illustration.
+                  VentIntegration.chatListEmptyBuilder?.call(
+                        context,
+                        hasChatsOutsideFilter: hasVisibleRooms,
+                      ) ??
+                      Column(
+                        mainAxisAlignment: .center,
                         children: [
-                          const Column(
-                            mainAxisSize: .min,
+                          Stack(
+                            alignment: Alignment.center,
                             children: [
-                              DummyChatListItem(opacity: 0.5, animate: false),
-                              DummyChatListItem(opacity: 0.3, animate: false),
+                              const Column(
+                                mainAxisSize: .min,
+                                children: [
+                                  DummyChatListItem(
+                                    opacity: 0.5,
+                                    animate: false,
+                                  ),
+                                  DummyChatListItem(
+                                    opacity: 0.3,
+                                    animate: false,
+                                  ),
+                                ],
+                              ),
+                              Icon(
+                                CupertinoIcons.chat_bubble_text_fill,
+                                size: 128,
+                                color: theme.colorScheme.secondary,
+                              ),
                             ],
                           ),
-                          Icon(
-                            CupertinoIcons.chat_bubble_text_fill,
-                            size: 128,
-                            color: theme.colorScheme.secondary,
+                          Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Text(
+                              hasVisibleRooms
+                                  ? L10n.of(context).noMoreChatsFound
+                                  : L10n.of(context).noChatsFoundHere,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 18,
+                                color: theme.colorScheme.secondary,
+                              ),
+                            ),
                           ),
                         ],
                       ),
-                      Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Text(
-                          client.rooms.isEmpty
-                              ? L10n.of(context).noChatsFoundHere
-                              : L10n.of(context).noMoreChatsFound,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: theme.colorScheme.secondary,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
                 ],
               ]),
             ),

@@ -4,6 +4,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 import 'package:fluffychat/config/themes.dart';
+import 'package:fluffychat/config/vent_integration.dart';
 import 'package:fluffychat/l10n/l10n.dart';
 import 'package:fluffychat/pages/chat_list/chat_list.dart';
 import 'package:fluffychat/pages/chat_list/client_chooser_button.dart';
@@ -74,7 +75,10 @@ class ChatListHeader extends StatelessWidget implements PreferredSizeWidget {
                             onPressed: controller.cancelSearch,
                             color: theme.colorScheme.onPrimaryContainer,
                           )
-                        : FluffyThemes.isColumnMode(context) ||
+                        // [vent] The host app has no navigation rail to open,
+                        // so the search affordance always stays put.
+                        : VentIntegration.embedded ||
+                              FluffyThemes.isColumnMode(context) ||
                               controller.spaces.isEmpty
                         ? IconButton(
                             tooltip: L10n.of(context).search,
@@ -131,6 +135,10 @@ class ChatListHeader extends StatelessWidget implements PreferredSizeWidget {
                               maxLines: 2,
                             ),
                           )
+                  // [vent] The host app owns account switching and settings, so
+                  // the chat list must not offer a second entry point to them.
+                  : VentIntegration.embedded
+                  ? null
                   : SizedBox(width: 0, child: ClientChooserButton(controller)),
             ),
           );

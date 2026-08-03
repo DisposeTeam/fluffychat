@@ -27,6 +27,23 @@ All customization commits are prefixed `[vent]` so they are easy to find and re-
 | `lib/config/setting_keys.dart` | `applicationName` default `FluffyChat` → `Mio Chat` | Standalone app identity |
 | `lib/config/setting_keys.dart` | `colorSchemeSeedInt` default `0xFF5625BA` → `0xFF000000` | Black seed for B&W theme |
 | `lib/config/themes.dart` | `DynamicSchemeVariant.rainbow` → `.monochrome` | Black & white "prototype" theme |
+| `lib/config/vent_integration.dart` | **New file** — `VentIntegration` host hooks | Single seam for everything below |
+| `lib/pages/chat_list/chat_list.dart` | Add `visibleRooms`; `filteredRooms` + `_updateRoomTags` read it | Host can hide server-managed rooms |
+| `lib/pages/chat_list/chat_list_body.dart` | Room counts use `visibleRooms`; empty state defers to `chatListEmptyBuilder` | Vent renders its own empty state |
+| `lib/pages/chat_list/chat_list_header.dart` | Hide `ClientChooserButton`, pin the search icon when `embedded` | Host owns accounts/settings/navigation |
+
+### The `VentIntegration` seam
+
+Host-app behaviour is injected through `VentIntegration` (a handful of static
+hooks) rather than by forking widgets. Every hook is null/false by default, so
+the standalone Mio Chat build takes exactly the upstream path. Prefer adding a
+hook + a one-line call site over rewriting a widget — that is what keeps the
+`sync-upstream.sh` conflicts to a `git merge` of adjacent lines.
+
+The Vent app installs its hooks in
+`vent-app/lib/modules/chat/presentation/pages/vent_chat_tab.dart`, themes the
+embedded screens via `VentChatTheme`, and mounts the FluffyChat routes it
+exposes from `vent-app/lib/modules/chat/presentation/chat_routes.dart`.
 
 ### Not yet done (planned)
 - Standalone platform identity for store publishing: `android/app/src/main/AndroidManifest.xml`
@@ -35,6 +52,8 @@ All customization commits are prefixed `[vent]` so they are easy to find and re-
 - Logo / launcher icon / splash asset swaps (replace file contents, keep filenames → no text conflict).
 
 ## Why this stays conflict-free
-- Changes are concentrated in 2 low-churn config files, as small in-place value edits.
-- No edits to chat/list widgets, which are the files upstream changes most.
 - Branding is driven by runtime settings + a Material 3 scheme variant, not by forking widgets.
+- Host-app behaviour goes through `VentIntegration`, so the chat/list widgets —
+  the files upstream changes most — carry a handful of guarded lines rather than
+  a rewrite. Each is tagged `[vent]` so `sync-upstream.sh` conflicts are obvious.
+- Vent's own theme, routes and empty state live in `vent-app`, not in this fork.
