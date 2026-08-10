@@ -204,6 +204,15 @@ Future<void> notificationTap(
                 : '/rooms/$roomId?client=${client.clientName}',
           );
       }
+    default:
+      // Covers NotificationResponseType.notificationDismissed, added in
+      // flutter_local_notifications_platform_interface 12.1.0. Deliberately a
+      // `default` rather than a named case: this app resolves 12.0.0 (where the
+      // value does not exist and naming it fails to compile) while the module's
+      // own resolution is 12.1.0 (where an unhandled value is a compile error).
+      // The summary notification is already refreshed above, so a dismissal
+      // needs no further work.
+      Logs().v('Notification dismissed', payload.roomId);
   }
 }
 
