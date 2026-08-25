@@ -31,6 +31,13 @@ All customization commits are prefixed `[vent]` so they are easy to find and re-
 | `lib/pages/chat_list/chat_list.dart` | Add `visibleRooms`; `filteredRooms` + `_updateRoomTags` read it | Host can hide server-managed rooms |
 | `lib/pages/chat_list/chat_list_body.dart` | Room counts use `visibleRooms`; empty state defers to `chatListEmptyBuilder` | Vent renders its own empty state |
 | `lib/pages/chat_list/chat_list_header.dart` | Hide `ClientChooserButton`, pin the search icon when `embedded` | Host owns accounts/settings/navigation |
+| `lib/utils/url_launcher.dart` | `launchUrl()` offers the URL to `VentIntegration.handleUrl` first | A link to a host screen opens in the app, not the browser |
+| `lib/pages/chat/events/message_content.dart` | Text branch offers the body to `VentIntegration.messageEmbedBuilder` | Host renders a shared event/moment/profile as its own preview card |
+| `lib/pages/chat/chat_view.dart` | App-bar overflow defers to `VentIntegration.chatActionsBuilder` | Host replaces the Matrix menu (encryption / emotes / leave) with its own |
+| `lib/pages/chat_details/chat_details_view.dart` | Same deferral for the details screen | A deep link can still land there |
+| `lib/pages/chat/chat_app_bar_title.dart` | Title tap offers itself to `VentIntegration.handleChatTitleTap` first | Host opens the person, not the room settings |
+| `lib/pages/chat_details/participant_list_item.dart` | Member tap offers itself to `VentIntegration.handleMemberTap` first | Host opens the member profile, not the moderation menu |
+| `lib/pages/chat/chat_input_row.dart` | Composer placeholder is neutral when `embedded` | "Unencrypted message" advertises a setting an embedded user cannot change |
 
 ### The `VentIntegration` seam
 

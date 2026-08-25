@@ -5,6 +5,7 @@
 
 import 'package:emoji_picker_flutter/locales/default_emoji_set_locale.dart';
 import 'package:fluffychat/config/setting_keys.dart';
+import 'package:fluffychat/config/vent_integration.dart';
 import 'package:fluffychat/l10n/l10n.dart';
 import 'package:fluffychat/pages/chat/recording_input_row.dart';
 import 'package:fluffychat/pages/chat/recording_view_model.dart';
@@ -306,8 +307,14 @@ class ChatInputRow extends StatelessWidget {
                             top: 3.0,
                           ),
                           counter: const SizedBox.shrink(),
+                          // [vent] An embedded host hides encryption state
+                          // from its users, so the placeholder is a neutral
+                          // prompt rather than a warning about a setting they
+                          // have no control over.
                           hintText: controller.room.encrypted
                               ? L10n.of(context).encryptedMessage
+                              : VentIntegration.embedded
+                              ? L10n.of(context).writeAMessage
                               : L10n.of(context).unencryptedMessage,
                           hintMaxLines: 1,
                           border: InputBorder.none,

@@ -8,6 +8,7 @@ import 'dart:ui' as ui;
 import 'package:desktop_drop/desktop_drop.dart';
 import 'package:fluffychat/config/setting_keys.dart';
 import 'package:fluffychat/config/themes.dart';
+import 'package:fluffychat/config/vent_integration.dart';
 import 'package:fluffychat/l10n/l10n.dart';
 import 'package:fluffychat/pages/chat/chat.dart';
 import 'package:fluffychat/pages/chat/chat_app_bar_list_tile.dart';
@@ -230,7 +231,13 @@ class ChatView extends StatelessWidget {
                         icon: const Icon(Icons.call_outlined),
                         tooltip: L10n.of(context).placeCall,
                       ),
-                    ChatSettingsPopupMenu(controller.room, true),
+                    // [vent] The host may replace the overflow menu wholesale.
+                    VentIntegration.chatActionsBuilder?.call(
+                          context,
+                          controller.room,
+                          displayChatDetails: true,
+                        ) ??
+                        ChatSettingsPopupMenu(controller.room, true),
                   ],
                 ],
                 bottom: PreferredSize(

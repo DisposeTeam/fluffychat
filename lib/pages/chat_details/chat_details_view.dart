@@ -3,6 +3,7 @@
 //
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
+import 'package:fluffychat/config/vent_integration.dart';
 import 'package:fluffychat/l10n/l10n.dart';
 import 'package:fluffychat/pages/chat_details/chat_details.dart';
 import 'package:fluffychat/pages/chat_details/participant_list_item.dart';
@@ -81,7 +82,13 @@ class ChatDetailsView extends StatelessWidget {
                       showQrCodeViewer(context, directChatMatrixID),
                 ),
               if (controller.widget.embeddedCloseButton == null)
-                ChatSettingsPopupMenu(room, false),
+                // [vent] The host may replace the overflow menu wholesale.
+                VentIntegration.chatActionsBuilder?.call(
+                      context,
+                      room,
+                      displayChatDetails: false,
+                    ) ??
+                    ChatSettingsPopupMenu(room, false),
             ],
             title: Text(L10n.of(context).chatDetails),
             backgroundColor: theme.appBarTheme.backgroundColor,

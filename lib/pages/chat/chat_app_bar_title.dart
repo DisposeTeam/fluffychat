@@ -4,6 +4,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 import 'package:fluffychat/config/themes.dart';
+import 'package:fluffychat/config/vent_integration.dart';
 import 'package:fluffychat/l10n/l10n.dart';
 import 'package:fluffychat/pages/chat/chat.dart';
 import 'package:fluffychat/utils/matrix_sdk_extensions/matrix_locals.dart';
@@ -35,9 +36,14 @@ class ChatAppBarTitle extends StatelessWidget {
       highlightColor: Colors.transparent,
       onTap: controller.isArchived
           ? null
-          : () => FluffyThemes.isThreeColumnMode(context)
-                ? controller.toggleDisplayChatDetailsColumn()
-                : context.go('/rooms/${room.id}/details'),
+          // [vent] The host opens the person behind a direct chat instead of
+          // the room's settings.
+          : () {
+              if (VentIntegration.handleChatTitleTap(context, room)) return;
+              FluffyThemes.isThreeColumnMode(context)
+                  ? controller.toggleDisplayChatDetailsColumn()
+                  : context.go('/rooms/${room.id}/details');
+            },
       child: Row(
         children: [
           Hero(

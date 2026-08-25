@@ -5,6 +5,7 @@
 
 import 'package:collection/collection.dart' show IterableExtension;
 import 'package:fluffychat/config/app_config.dart';
+import 'package:fluffychat/config/vent_integration.dart';
 import 'package:fluffychat/l10n/l10n.dart';
 import 'package:fluffychat/widgets/adaptive_dialogs/show_ok_cancel_alert_dialog.dart';
 import 'package:fluffychat/widgets/adaptive_dialogs/user_dialog.dart';
@@ -32,6 +33,9 @@ class UrlLauncher {
   const UrlLauncher(this.context, this.url, [this.name]);
 
   Future<void> launchUrl() async {
+    // [vent] A link to one of the host app's own screens opens there, not in
+    // the browser — a shared event lands on the event page inside the app.
+    if (url != null && VentIntegration.handleUrl(context, url!)) return;
     final l10n = L10n.of(context);
     final scaffoldMessenger = ScaffoldMessenger.of(context);
     if (url!.toLowerCase().startsWith(AppConfig.deepLinkPrefix) ||

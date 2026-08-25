@@ -6,6 +6,7 @@
 import 'dart:math';
 
 import 'package:fluffychat/config/setting_keys.dart';
+import 'package:fluffychat/config/vent_integration.dart';
 import 'package:fluffychat/l10n/l10n.dart';
 import 'package:fluffychat/pages/chat/events/poll.dart';
 import 'package:fluffychat/pages/chat/events/video_player.dart';
@@ -180,6 +181,15 @@ class MessageContent extends StatelessWidget {
 
             final bigEmotes =
                 !event.isRichMessage && bigEmojis.contains(event.body);
+
+            // [vent] A shared event, moment or profile renders as the host's
+            // own preview card rather than a title above a bare URL.
+            final embed = VentIntegration.messageEmbedBuilder?.call(
+              context,
+              event.body,
+              textColor,
+            );
+            if (embed != null) return embed;
 
             return Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

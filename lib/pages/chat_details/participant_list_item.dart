@@ -4,6 +4,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 import 'package:fluffychat/config/app_config.dart';
+import 'package:fluffychat/config/vent_integration.dart';
 import 'package:fluffychat/l10n/l10n.dart';
 import 'package:fluffychat/widgets/member_actions_popup_menu_button.dart';
 import 'package:flutter/material.dart';
@@ -40,7 +41,12 @@ class ParticipantListItem extends StatelessWidget {
         user.powerLevel.role == PowerLevelRole.owner;
 
     return ListTile(
-      onTap: () => showMemberActionsPopupMenu(context: context, user: user),
+      // [vent] The host opens the member's own profile instead of the
+      // moderation menu.
+      onTap: () {
+        if (VentIntegration.handleMemberTap(context, user)) return;
+        showMemberActionsPopupMenu(context: context, user: user);
+      },
       title: Row(
         children: <Widget>[
           Expanded(
