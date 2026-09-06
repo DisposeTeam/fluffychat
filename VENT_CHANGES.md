@@ -31,6 +31,8 @@ All customization commits are prefixed `[vent]` so they are easy to find and re-
 | `lib/pages/chat_list/chat_list.dart` | Add `visibleRooms`; `filteredRooms` + `_updateRoomTags` read it | Host can hide server-managed rooms |
 | `lib/pages/chat_list/chat_list_body.dart` | Room counts use `visibleRooms`; empty state defers to `chatListEmptyBuilder` | Vent renders its own empty state |
 | `lib/pages/chat_list/chat_list_header.dart` | Hide `ClientChooserButton`, pin the search icon when `embedded` | Host owns accounts/settings/navigation |
+| `lib/pages/chat_list/chat_list_item.dart` | Declining an invite the server 403s on marks it left locally | A stale local invite was undismissable ("no permission") |
+| `lib/pages/chat_list/start_chat_fab.dart` | Offers the tap to `VentIntegration.handleStartChat` before `/rooms/newprivatechat` | Host finds people in its own directory; its accounts are not arbitrary Matrix IDs |
 | `lib/utils/url_launcher.dart` | `launchUrl()` offers the URL to `VentIntegration.handleUrl` first | A link to a host screen opens in the app, not the browser |
 | `lib/pages/chat/events/message_content.dart` | Text branch offers the body to `VentIntegration.messageEmbedBuilder` | Host renders a shared event/moment/profile as its own preview card |
 | `lib/pages/chat/chat_view.dart` | App-bar overflow defers to `VentIntegration.chatActionsBuilder` | Host replaces the Matrix menu (encryption / emotes / leave) with its own |

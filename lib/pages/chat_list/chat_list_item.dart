@@ -18,6 +18,32 @@ import '../../config/themes.dart';
 import '../../utils/date_time_extension.dart';
 import '../../widgets/avatar.dart';
 
+/// Declines an invitation, and drops it locally when the homeserver denies it.
+///
+/// [vent] The database is keyed by client name, so an account that signed in
+/// after another one on the same device used to inherit its rooms. Such an
+/// invite exists only on this device: `leave` gets M_FORBIDDEN back, because
+/// the server never invited this account, and the stock handler surfaced that
+/// as "no permission" and left the phantom chat sitting in the list forever.
+///
+/// The SDK already unwinds this way for M_NOT_FOUND and M_UNKNOWN — a room the
+/// server does not know about is simply marked as left locally. M_FORBIDDEN on
+/// an invite means the same thing here, so treat it the same.
+Future<void> _declineInvitation(Room room) async {
+  try {
+    await room.leave();
+  } on MatrixException catch (e, s) {
+    if (e.error != MatrixError.M_FORBIDDEN) rethrow;
+    Logs().w('Homeserver refused to decline ${room.id}, dropping it', e, s);
+    await room.client.handleSync(
+      SyncUpdate(
+        nextBatch: '',
+        rooms: RoomsUpdate(leave: {room.id: LeftRoomUpdate()}),
+      ),
+    );
+  }
+}
+
 class ChatListItem extends StatelessWidget {
   final Room room;
   final Room? space;
@@ -389,7 +415,7 @@ class ChatListItem extends StatelessWidget {
                               if (!context.mounted) return;
                               await showFutureLoadingDialog(
                                 context: context,
-                                future: room.leave,
+                                future: () => _declineInvitation(room),
                               );
                             },
                           )

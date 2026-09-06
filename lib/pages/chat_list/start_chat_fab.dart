@@ -4,6 +4,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 import 'package:fluffychat/config/themes.dart';
+import 'package:fluffychat/config/vent_integration.dart';
 import 'package:fluffychat/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -18,7 +19,11 @@ class StartChatFab extends StatelessWidget {
       heroTag: 'start_chat_fab',
       backgroundColor: Theme.of(context).colorScheme.primary,
       foregroundColor: Theme.of(context).colorScheme.onPrimary,
-      onPressed: () => context.go('/rooms/newprivatechat'),
+      onPressed: () {
+        // The host may own this journey — see VentIntegration.startChatHandler.
+        if (VentIntegration.handleStartChat(context)) return;
+        context.go('/rooms/newprivatechat');
+      },
       extendedIconLabelSpacing: extended ? 10 : 0,
       extendedPadding: extended
           ? null

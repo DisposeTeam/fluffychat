@@ -83,6 +83,20 @@ abstract class VentIntegration {
   static bool handleMemberTap(BuildContext context, User user) =>
       memberTapHandler?.call(context, user) ?? false;
 
+  /// Host claim on "start a new chat". Return true when the host opened its
+  /// own way of finding someone; the stock NewPrivateChat screen — a Matrix ID
+  /// search, an invite link and a QR code — is then never shown.
+  ///
+  /// A host whose accounts are its own users, not arbitrary Matrix addresses,
+  /// has no use for that screen: you find a person in the host's directory and
+  /// message them from their profile. Standalone builds leave this null and
+  /// keep the stock screen, which is the only way to reach someone on another
+  /// homeserver.
+  static bool Function(BuildContext context)? startChatHandler;
+
+  static bool handleStartChat(BuildContext context) =>
+      startChatHandler?.call(context) ?? false;
+
   static bool isRoomVisible(Room room) =>
       roomVisibilityFilter?.call(room) ?? true;
 }
