@@ -395,7 +395,10 @@ class ChatListController extends State<ChatList>
           context,
         ).store.getString(_serverStoreNamespace);
         Matrix.of(context).backgroundPush?.setupPush();
-        UpdateNotifier.showUpdateDialog(context);
+        // Vent ships its own release notes; the stock FluffyChat "Update
+        // installed" dialog (Support/Changelog links to the FluffyChat
+        // project) only makes sense for the standalone build.
+        if (!VentIntegration.embedded) UpdateNotifier.showUpdateDialog(context);
       }
 
       // Workaround for system UI overlay style not applied on app start
