@@ -145,6 +145,13 @@ class ChatListViewBody extends StatelessWidget {
                       children: [
                         ...ActiveFilter.values
                             .where((filter) => filter != ActiveFilter.tag)
+                            // [vent] No Groups tab while the host has no
+                            // way to start a group.
+                            .where(
+                              (filter) =>
+                                  filter != ActiveFilter.groups ||
+                                  VentIntegration.groupChatsEnabled,
+                            )
                             .map(
                               (filter) => Padding(
                                 padding: const EdgeInsets.symmetric(

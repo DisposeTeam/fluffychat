@@ -432,6 +432,12 @@ class ChatListController extends State<ChatList>
           ) ??
           ActiveFilter.allChats;
     }
+    // [vent] A saved "Groups" choice must not strand the list on a filter
+    // whose chip is hidden.
+    if (activeFilter == ActiveFilter.groups &&
+        !VentIntegration.groupChatsEnabled) {
+      activeFilter = ActiveFilter.allChats;
+    }
 
     if (AppSettings.debugPush.value) _processPushHelperCrashReport();
 

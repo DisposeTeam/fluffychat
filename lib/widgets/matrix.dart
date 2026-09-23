@@ -7,6 +7,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:collection/collection.dart';
+import 'package:fluffychat/config/vent_integration.dart';
 import 'package:fluffychat/l10n/l10n.dart';
 import 'package:fluffychat/utils/client_manager.dart';
 import 'package:fluffychat/utils/init_with_restore.dart';
@@ -328,6 +329,14 @@ class MatrixState extends State<Matrix> with WidgetsBindingObserver {
       backgroundPush = BackgroundPush(
         this,
         onFcmError: (errorMsg, {Uri? link}) async {
+          // [vent] The host owns notifications and their messaging. Its
+          // Matrix widget also sits above the Navigator (in
+          // MaterialApp.builder) and FluffyChatApp.router is not the host's
+          // router, so the dialog below would have no Navigator to open in.
+          if (VentIntegration.embedded) {
+            Logs().w('[Push] Not available: $errorMsg');
+            return;
+          }
           final context =
               FluffyChatApp.router.routerDelegate.navigatorKey.currentContext ??
               this.context;

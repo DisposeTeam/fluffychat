@@ -29,8 +29,9 @@ All customization commits are prefixed `[vent]` so they are easy to find and re-
 | `lib/config/themes.dart` | `DynamicSchemeVariant.rainbow` → `.monochrome` | Black & white "prototype" theme |
 | `lib/config/vent_integration.dart` | **New file** — `VentIntegration` host hooks | Single seam for everything below |
 | `lib/pages/chat_list/chat_list.dart` | Add `visibleRooms`; `filteredRooms` + `_updateRoomTags` read it | Host can hide server-managed rooms |
-| `lib/pages/chat_list/chat_list_body.dart` | Room counts use `visibleRooms`; empty state defers to `chatListEmptyBuilder` | Vent renders its own empty state |
-| `lib/pages/chat_list/chat_list_header.dart` | Hide `ClientChooserButton`, pin the search icon when `embedded` | Host owns accounts/settings/navigation |
+| `lib/pages/chat_list/chat_list_body.dart` | Room counts use `visibleRooms`; empty state defers to `chatListEmptyBuilder`; Groups filter hidden unless `VentIntegration.groupChatsEnabled` | Vent renders its own empty state |
+| `lib/pages/chat_list/chat_list_header.dart` | Hide `ClientChooserButton`, pin the search icon when `embedded`; with `VentIntegration.searchHandler` set the search bar is read-only and opens the host's search | Host owns accounts/settings/navigation, and searches chats + its own user directory (Conduit's only finds people you already share a room with) |
+| `lib/widgets/matrix.dart` | `onFcmError` logs instead of showing its dialog when `embedded` | Host owns notifications; its Matrix widget sits above the Navigator, so the dialog crashed ("context that does not include a Navigator") |
 | `lib/pages/chat_list/chat_list_item.dart` | Declining an invite the server 403s on marks it left locally | A stale local invite was undismissable ("no permission") |
 | `lib/pages/chat_list/start_chat_fab.dart` | Offers the tap to `VentIntegration.handleStartChat` before `/rooms/newprivatechat` | Host finds people in its own directory; its accounts are not arbitrary Matrix IDs |
 | `lib/utils/url_launcher.dart` | `launchUrl()` offers the URL to `VentIntegration.handleUrl` first | A link to a host screen opens in the app, not the browser |

@@ -97,6 +97,26 @@ abstract class VentIntegration {
   static bool handleStartChat(BuildContext context) =>
       startChatHandler?.call(context) ?? false;
 
+  /// Host claim on the chat list's search. Return true when the host opened
+  /// its own search; the search bar then acts as a button and the stock
+  /// in-list search mode — public rooms, spaces, a homeserver picker and the
+  /// homeserver's user directory — never opens.
+  ///
+  /// A homeserver's directory only knows people the searcher already shares a
+  /// room with, so a host with its own user directory searches people there,
+  /// alongside the chats, in its own design.
+  static bool Function(BuildContext context)? searchHandler;
+
+  static bool get hasSearchHandler => searchHandler != null;
+
+  static bool handleSearch(BuildContext context) =>
+      searchHandler?.call(context) ?? false;
+
+  /// Whether the host offers group chats. False hides the chat list's
+  /// "Groups" filter, which would otherwise be an empty tab promising a
+  /// feature the host has no way to start.
+  static bool groupChatsEnabled = true;
+
   static bool isRoomVisible(Room room) =>
       roomVisibilityFilter?.call(room) ?? true;
 }
