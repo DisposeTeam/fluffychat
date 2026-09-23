@@ -49,6 +49,11 @@ class ChatListHeader extends StatelessWidget implements PreferredSizeWidget {
           return TextField(
             controller: controller.searchController,
             focusNode: controller.searchFocusNode,
+            // [vent] With a host search the bar is a button into it.
+            readOnly: VentIntegration.hasSearchHandler,
+            onTap: VentIntegration.hasSearchHandler
+                ? () => VentIntegration.handleSearch(context)
+                : null,
             textInputAction: TextInputAction.search,
             onChanged: (text) =>
                 controller.onSearchEnter(text, globalSearch: globalSearch),
@@ -82,7 +87,10 @@ class ChatListHeader extends StatelessWidget implements PreferredSizeWidget {
                               controller.spaces.isEmpty
                         ? IconButton(
                             tooltip: L10n.of(context).search,
-                            onPressed: controller.startSearch,
+                            onPressed: () {
+                              if (VentIntegration.handleSearch(context)) return;
+                              controller.startSearch();
+                            },
                             icon: Icon(
                               Icons.search_outlined,
                               color: theme.colorScheme.onPrimaryContainer,
