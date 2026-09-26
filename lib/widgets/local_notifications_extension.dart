@@ -72,14 +72,26 @@ extension LocalNotificationsExtension on MatrixState {
         method: thumbnailMethod,
       );
 
+      // [vent] Nothing to show without permission. An embedding host asks
+      // from its own button, so it may not have been asked yet.
+      if (html.Notification.permission != 'granted') return;
+
       if (AppSettings.webNotificationSound.value) _audioPlayer.play();
 
-      html.Notification(
-        title,
-        body: body,
-        icon: thumbnailUri?.toString(),
-        tag: event.room.id,
-      );
+      try {
+        html.Notification(
+          title,
+          body: body,
+          icon: thumbnailUri?.toString(),
+          // Same tag as the host's web push for this room, so the browser
+          // replaces one with the other instead of showing both.
+          tag: event.room.id,
+        );
+      } catch (e) {
+        // [vent] Mobile browsers only allow notifications from a service
+        // worker; the constructor throws there. Push covers them instead.
+        Logs().d('In-page notification not supported here', e);
+      }
       return;
     }
 

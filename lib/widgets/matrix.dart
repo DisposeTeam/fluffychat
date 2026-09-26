@@ -301,7 +301,10 @@ class MatrixState extends State<Matrix> with WidgetsBindingObserver {
         ),
       );
       c.onSync.stream.first.then((s) {
-        html.Notification.requestPermission();
+        // [vent] An embedding host asks from its own button: iOS ignores a
+        // prompt that no tap started, and an unprompted one that gets
+        // blocked would also block the host's push for good.
+        if (!VentIntegration.embedded) html.Notification.requestPermission();
         onNotification[name] ??= c.onNotification.stream.listen(
           showLocalNotification,
         );
@@ -325,18 +328,14 @@ class MatrixState extends State<Matrix> with WidgetsBindingObserver {
       _registerSubs(c.clientName);
     }
 
-    if (PlatformInfos.isMobile) {
+    // [vent] An embedding host owns push: it registers its own FCM token as
+    // the Matrix pusher, so a second Firebase plugin never competes for the
+    // same messages. Its Matrix widget also sits above the Navigator, so the
+    // "push not available" dialog below could not open there anyway.
+    if (PlatformInfos.isMobile && !VentIntegration.embedded) {
       backgroundPush = BackgroundPush(
         this,
         onFcmError: (errorMsg, {Uri? link}) async {
-          // [vent] The host owns notifications and their messaging. Its
-          // Matrix widget also sits above the Navigator (in
-          // MaterialApp.builder) and FluffyChatApp.router is not the host's
-          // router, so the dialog below would have no Navigator to open in.
-          if (VentIntegration.embedded) {
-            Logs().w('[Push] Not available: $errorMsg');
-            return;
-          }
           final context =
               FluffyChatApp.router.routerDelegate.navigatorKey.currentContext ??
               this.context;
