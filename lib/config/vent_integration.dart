@@ -119,4 +119,24 @@ abstract class VentIntegration {
 
   static bool isRoomVisible(Room room) =>
       roomVisibilityFilter?.call(room) ?? true;
+
+  /// Shows a chat notification for [event], a message the live sync just
+  /// delivered, in place of FluffyChat's own. The title and body are already
+  /// localized and decrypted. When set, FluffyChat raises these on every
+  /// platform (not just web and Linux) and never initializes the local
+  /// notifications plugin itself: the host owns it, along with tap routing.
+  ///
+  /// The sync also replays what arrived while the app was in the background,
+  /// so the host decides from the event's timestamp whether it is news.
+  static Future<void> Function({
+    required Event event,
+    required String title,
+    required String body,
+  })?
+  chatNotificationHandler;
+
+  /// The room the host is showing, if any. FluffyChat otherwise reads it from
+  /// its own router, which an embedding host never displays — so without this
+  /// the open chat would notify about its own messages.
+  static String? Function()? activeRoomIdResolver;
 }

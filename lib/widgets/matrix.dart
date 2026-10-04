@@ -203,6 +203,9 @@ class MatrixState extends State<Matrix> with WidgetsBindingObserver {
   }
 
   String? get activeRoomId {
+    // [vent] An embedding host routes chats with its own router.
+    final resolver = VentIntegration.activeRoomIdResolver;
+    if (resolver != null) return resolver();
     final route = FluffyChatApp.router.routeInformationProvider.value.uri.path;
     if (!route.startsWith('/rooms/')) return null;
     return route.split('/')[2];
@@ -286,7 +289,16 @@ class MatrixState extends State<Matrix> with WidgetsBindingObserver {
           FluffyChatApp.router.go('/');
         });
     onUiaRequest[name] ??= c.onUiaRequest.stream.listen(uiaRequestHandler);
-    if (PlatformInfos.isWeb || PlatformInfos.isLinux) {
+    if (VentIntegration.chatNotificationHandler != null) {
+      // [vent] The host displays them, on every platform, and owns the
+      // notifications plugin and its taps. After the first sync, as below, so
+      // the initial catch-up does not replay old messages as new.
+      c.onSync.stream.first.then((s) {
+        onNotification[name] ??= c.onNotification.stream.listen(
+          showLocalNotification,
+        );
+      });
+    } else if (PlatformInfos.isWeb || PlatformInfos.isLinux) {
       FlutterLocalNotificationsPlugin().initialize(
         settings: InitializationSettings(
           linux: LinuxInitializationSettings(
