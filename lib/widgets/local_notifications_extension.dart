@@ -4,6 +4,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 import 'package:fluffychat/config/setting_keys.dart';
+import 'package:fluffychat/config/vent_integration.dart';
 import 'package:fluffychat/l10n/l10n.dart';
 import 'package:fluffychat/utils/client_download_content_extension.dart';
 import 'package:fluffychat/utils/matrix_sdk_extensions/matrix_locals.dart';
@@ -43,6 +44,13 @@ extension LocalNotificationsExtension on MatrixState {
       hideEdit: true,
       removeMarkdown: true,
     );
+    // [vent] An embedding host shows it its own way (and routes the tap).
+    final hostHandler = VentIntegration.chatNotificationHandler;
+    if (hostHandler != null) {
+      await hostHandler(event: event, title: title, body: body);
+      return;
+    }
+
     final avatarUrl = event.room.avatar;
 
     const size = 128;
