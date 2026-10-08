@@ -30,7 +30,7 @@ Future<T?> showAdaptiveBottomSheet<T>({
             elevation: Theme.of(context).dialogTheme.elevation ?? 4,
             shadowColor: Theme.of(context).dialogTheme.shadowColor,
             borderRadius: BorderRadius.circular(AppConfig.borderRadius),
-            color: Theme.of(context).scaffoldBackgroundColor,
+            color: Theme.of(context).colorScheme.surface,
             clipBehavior: Clip.hardEdge,
             child: builder(context),
           ),

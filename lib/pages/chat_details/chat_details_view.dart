@@ -342,7 +342,7 @@ class ChatDetailsView extends StatelessWidget {
                         ),
                       ),
                       leading: CircleAvatar(
-                        backgroundColor: theme.scaffoldBackgroundColor,
+                        backgroundColor: theme.colorScheme.surface,
                         child: const Icon(
                           Icons.group_outlined,
                           color: Colors.grey,

@@ -8,6 +8,7 @@ import 'dart:ui' as ui;
 import 'package:desktop_drop/desktop_drop.dart';
 import 'package:fluffychat/config/setting_keys.dart';
 import 'package:fluffychat/config/themes.dart';
+import 'package:fluffychat/config/vent_chat_design.dart';
 import 'package:fluffychat/config/vent_integration.dart';
 import 'package:fluffychat/l10n/l10n.dart';
 import 'package:fluffychat/pages/chat/chat.dart';
@@ -39,6 +40,8 @@ class ChatView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    // [vent] Non-null only when embedded in the Vent app.
+    final ventDesign = VentChatDesign.of(context);
     if (controller.room.membership == Membership.invite) {
       showFutureLoadingDialog(
         context: context,
@@ -102,9 +105,19 @@ class ChatView extends StatelessWidget {
                 backgroundColor: controller.selectedEvents.isEmpty
                     ? controller.activeThreadId != null
                           ? theme.colorScheme.secondaryContainer
+                          : ventDesign != null
+                          ? Colors.transparent
                           : theme.colorScheme.surface.withAlpha(240)
                     : theme.colorScheme.tertiaryContainer,
                 automaticallyImplyLeading: false,
+                // [vent] Frosted bar over the host backdrop, glass back button.
+                flexibleSpace:
+                    ventDesign != null &&
+                        controller.selectedEvents.isEmpty &&
+                        activeThreadId == null
+                    ? const VentGlassBlur(child: SizedBox.expand())
+                    : null,
+                leadingWidth: ventDesign != null ? 62 : null,
                 leading: controller.selectMode
                     ? IconButton(
                         icon: const Icon(Icons.close),
@@ -121,8 +134,24 @@ class ChatView extends StatelessWidget {
                       )
                     : FluffyThemes.isColumnMode(context)
                     ? null
+                    : ventDesign != null
+                    ? Center(
+                        child: VentGlassCircleButton(
+                          design: ventDesign,
+                          icon: Icons.chevron_left_rounded,
+                          tooltip: MaterialLocalizations.of(
+                            context,
+                          ).backButtonTooltip,
+                          size: 38,
+                          onPressed: () => Navigator.of(context).maybePop(),
+                        ),
+                      )
                     : const Center(child: BackButton()),
-                titleSpacing: FluffyThemes.isColumnMode(context) ? 24 : 0,
+                titleSpacing: FluffyThemes.isColumnMode(context)
+                    ? 24
+                    : ventDesign != null
+                    ? 4
+                    : 0,
                 title: ChatAppBarTitle(controller),
                 actions: [
                   if (controller.selectMode) ...[
@@ -357,8 +386,13 @@ class ChatView extends StatelessWidget {
                                   colors: [
                                     theme.colorScheme.surface.withAlpha(0),
                                     theme.colorScheme.surface.withAlpha(0),
-                                    theme.colorScheme.surface,
-                                    theme.colorScheme.surface,
+                                    // [vent] The host backdrop shows through.
+                                    theme.colorScheme.surface.withAlpha(
+                                      ventDesign != null ? 0 : 255,
+                                    ),
+                                    theme.colorScheme.surface.withAlpha(
+                                      ventDesign != null ? 0 : 255,
+                                    ),
                                   ],
                                   begin: Alignment.topCenter,
                                   end: Alignment.bottomCenter,
@@ -388,10 +422,23 @@ class ChatView extends StatelessWidget {
                                             ? theme
                                                   .colorScheme
                                                   .tertiaryContainer
+                                            : ventDesign != null
+                                            ? ventDesign.glassFill
                                             : theme
                                                   .colorScheme
                                                   .surfaceContainer,
-                                        borderRadius: BorderRadius.circular(32),
+                                        borderRadius: ventDesign != null
+                                            ? null
+                                            : BorderRadius.circular(32),
+                                        shape: ventDesign == null
+                                            ? null
+                                            : RoundedSuperellipseBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(32),
+                                                side: BorderSide(
+                                                  color: ventDesign.glassBorder,
+                                                ),
+                                              ),
                                         child:
                                             controller.room.isAbandonedDMRoom ==
                                                 true
@@ -453,7 +500,7 @@ class ChatView extends StatelessWidget {
                         ),
                         if (controller.dragging)
                           Container(
-                            color: theme.scaffoldBackgroundColor.withAlpha(230),
+                            color: theme.colorScheme.surface.withAlpha(230),
                             alignment: Alignment.center,
                             child: const Icon(Icons.upload_outlined, size: 100),
                           ),

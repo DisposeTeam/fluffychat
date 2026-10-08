@@ -45,6 +45,17 @@ All customization commits are prefixed `[vent]` so they are easy to find and re-
 | `lib/pages/chat/chat_app_bar_title.dart` | Title tap offers itself to `VentIntegration.handleChatTitleTap` first | Host opens the person, not the room settings |
 | `lib/pages/chat_details/participant_list_item.dart` | Member tap offers itself to `VentIntegration.handleMemberTap` first | Host opens the member profile, not the moderation menu |
 | `lib/pages/chat/chat_input_row.dart` | Composer placeholder is neutral when `embedded` | "Unencrypted message" advertises a setting an embedded user cannot change |
+| `lib/config/vent_chat_design.dart` | **New file** — `VentChatDesign` ThemeExtension (glass fills, display title style, bubble colours, accent), `VentGlassCircleButton`, `VentGlassBlur`, `ventDaySeparator` | Host hands its design tokens through its chat theme; every restyle below reads `VentChatDesign.of(context)`, which is null unless `VentIntegration.embedded` **and** the host installed the extension |
+| `lib/pages/chat_list/vent_chat_list_item.dart` | **New file** — `VentChatListItem` / `VentChatCard`: glass row card (avatar, name, "last · time", accent unread dot) | Vent chat-list design |
+| `lib/pages/chat_list/vent_chat_list_header.dart` | **New file** — display title + glass search and compose buttons | Replaces the search field and the FAB when embedded |
+| `lib/pages/chat_list/chat_list_item.dart` | Early return to `VentChatListItem` when `VentChatDesign.of` is set; `_declineInvitation` made public (`declineInvitation`) | Reuse the invite-decline path from the new row |
+| `lib/pages/chat_list/chat_list_body.dart` | Header swap and no filter chips when `VentChatDesign.of` is set (stock search mode keeps the stock header) | The design shows neither a search field nor chips |
+| `lib/pages/chat_list/chat_list_view.dart` | No FAB and a transparent Material when `VentChatDesign.of` is set | A colourless Material paints `canvasColor`, hiding the host backdrop |
+| `lib/pages/chat/chat_view.dart` | Transparent frosted app bar, glass back button, transparent composer gradient, glass composer pill (all gated on `VentChatDesign.of`); drag overlay uses `colorScheme.surface` | Conversation design |
+| `lib/pages/chat/chat_app_bar_title.dart` | 40px avatar, muted presence line, "last active" fallback when `VentChatDesign.of` is set | Presence line from `CachedPresence`; omitted when the server sends none |
+| `lib/pages/chat/chat_event_list.dart` | Day separator is plain centred text when `VentChatDesign.of` is set | Conversation design |
+| `lib/pages/chat/events/message.dart` | Pill bubbles (all corners round), glass incoming / blue outgoing, no gradient, and no bubble at all around a host embed (`messageEmbedBuilder` result) when `VentChatDesign.of` is set | Conversation design; the shared-event card must not sit in a bubble |
+| `lib/utils/adaptive_bottom_sheet.dart`, `lib/utils/show_scaffold_dialog.dart`, `lib/pages/new_private_chat/new_private_chat_view.dart`, `lib/pages/settings_3pid/settings_3pid_view.dart`, `lib/pages/chat_details/chat_details_view.dart` | `theme.scaffoldBackgroundColor` → `theme.colorScheme.surface` (all unconditional) | These used the scaffold colour as an opaque *fill*. The host makes the scaffold transparent to show its backdrop, so sheets/dialogs/avatars would be see-through. Identical in the stock theme (M3 scaffold colour == `colorScheme.surface`), so Mio Chat is unchanged |
 
 ### The `VentIntegration` seam
 
