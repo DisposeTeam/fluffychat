@@ -139,4 +139,49 @@ abstract class VentIntegration {
   /// its own router, which an embedding host never displays — so without this
   /// the open chat would notify about its own messages.
   static String? Function()? activeRoomIdResolver;
+
+  /// Host-supplied date and time labels, so the chat shows dates in the
+  /// calendar the host's user picked (Jalali, say) instead of the Gregorian
+  /// ones `intl` knows. Return null for a [style] the host does not handle and
+  /// FluffyChat formats it as usual; null (the default) hook = stock behaviour.
+  ///
+  /// Asked every time a label is built, so the host reads its calendar setting
+  /// inside the callback and a change shows on the next rebuild.
+  static String? Function(DateTime date, VentDateStyle style)? dateFormatter;
+
+  /// [fallback] when the host has no opinion (no hook, or it returned null).
+  static String formatDate(
+    DateTime date,
+    VentDateStyle style,
+    String Function() fallback,
+  ) => dateFormatter?.call(date, style) ?? fallback();
+}
+
+/// The shapes of date label the chat shows. Each maps to the `intl` skeleton
+/// named beside it, which is what the stock formatting uses.
+enum VentDateStyle {
+  /// `E`: "Wed".
+  weekdayShort,
+
+  /// `EEEE`: "Wednesday".
+  weekdayLong,
+
+  /// `MMMd`: "Sep 9".
+  monthDay,
+
+  /// `MMMMd`: "September 9".
+  monthDayLong,
+
+  /// `yMMMd`: "Sep 9, 2026".
+  yearMonthDay,
+
+  /// `yMMMMd`: "September 9, 2026".
+  yearMonthDayLong,
+
+  /// `yMMMM`: "September 2026".
+  yearMonth,
+
+  /// The clock: "17:05" / "5:05 PM". Calendar-independent; the host decides
+  /// 12/24 hour and the digits.
+  timeOfDay,
 }

@@ -150,8 +150,16 @@ class VentGlassBlur extends StatelessWidget {
 /// (`localizedDate`: Today / Yesterday / weekday / date).
 String ventDaySeparator(BuildContext context, DateTime time, String relative) {
   final lang = Localizations.localeOf(context).languageCode;
-  final day = DateFormat.MMMd(lang).format(time);
-  final weekday = DateFormat.EEEE(lang).format(time);
+  final day = VentIntegration.formatDate(
+    time,
+    VentDateStyle.monthDay,
+    () => DateFormat.MMMd(lang).format(time),
+  );
+  final weekday = VentIntegration.formatDate(
+    time,
+    VentDateStyle.weekdayLong,
+    () => DateFormat.EEEE(lang).format(time),
+  );
   final today = DateTime.now();
   final diff = DateTime(
     today.year,

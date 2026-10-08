@@ -81,7 +81,8 @@ class VentChatListItem extends StatelessWidget {
         name: displayname,
         muted: room.pushRuleState != PushRuleState.notify,
         pinned: room.isFavourite,
-        time: !room.isSpace && !isInvite
+        // A room with no events has no time (the SDK reports year 0).
+        time: !room.isSpace && !isInvite && lastEvent != null
             ? room.latestEventReceivedTime.localizedTimeShort(context)
             : null,
         subtitle: (style) => typingText.isNotEmpty
@@ -246,34 +247,45 @@ class VentChatCard extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 2),
-                      Row(
-                        children: [
-                          Flexible(child: subtitle(subtitleStyle)),
-                          if (time != null) ...[
-                            Text(' · ', style: subtitleStyle),
-                            Text(
-                              time!,
-                              maxLines: 1,
-                              style: subtitleStyle.copyWith(color: muteColor),
-                            ),
-                          ],
-                        ],
-                      ),
+                      subtitle(subtitleStyle),
                     ],
                   ),
                 ),
-                if (trailing != null)
-                  trailing!
-                else if (unread)
+                // The end edge (left in RTL): the time of the last message, and
+                // under it the unread dot (or the invite's decline button). The
+                // message text takes whatever width is left, so the time sits
+                // at the same place on every row.
+                if (time != null || trailing != null || unread)
                   Padding(
                     padding: const EdgeInsetsDirectional.only(start: 12),
-                    child: Container(
-                      width: 10,
-                      height: 10,
-                      decoration: BoxDecoration(
-                        color: design.unreadDot,
-                        shape: BoxShape.circle,
-                      ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        if (time != null)
+                          Text(
+                            time!,
+                            maxLines: 1,
+                            softWrap: false,
+                            style: subtitleStyle.copyWith(
+                              fontSize: 13,
+                              color: muteColor,
+                            ),
+                          ),
+                        if (trailing != null)
+                          trailing!
+                        else if (unread) ...[
+                          if (time != null) const SizedBox(height: 6),
+                          Container(
+                            width: 10,
+                            height: 10,
+                            decoration: BoxDecoration(
+                              color: design.unreadDot,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                   ),
               ],

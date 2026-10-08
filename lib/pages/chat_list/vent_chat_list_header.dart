@@ -29,9 +29,18 @@ class VentChatListHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = L10n.of(context);
+    final titleStyle = design.titleStyle;
     return SliverToBoxAdapter(
       child: Padding(
-        padding: const EdgeInsetsDirectional.fromSTEB(16, 16, 16, 12),
+        // The list sits under the status bar / notch (the chat tab has no app
+        // bar and the list's SafeArea does not take the top), so the header
+        // brings its own top inset.
+        padding: EdgeInsetsDirectional.fromSTEB(
+          16,
+          MediaQuery.paddingOf(context).top + 12,
+          16,
+          12,
+        ),
         child: Row(
           children: [
             Expanded(
@@ -39,8 +48,18 @@ class VentChatListHeader extends StatelessWidget {
                 design.listTitle,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: design.titleStyle.copyWith(
+                style: titleStyle.copyWith(
                   color: Theme.of(context).colorScheme.onSurface,
+                  // The display face has no Arabic-script glyphs: without a
+                  // fallback a Persian title renders as missing-glyph boxes.
+                  fontFamilyFallback:
+                      titleStyle.fontFamilyFallback ??
+                      const ['vazir', 'Roboto'],
+                  // Negative tracking pulls joined letters apart in RTL
+                  // scripts.
+                  letterSpacing: Directionality.of(context) == TextDirection.rtl
+                      ? 0
+                      : titleStyle.letterSpacing,
                 ),
               ),
             ),
