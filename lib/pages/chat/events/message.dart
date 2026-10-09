@@ -8,6 +8,8 @@ import 'dart:ui' as ui;
 import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'package:fluffychat/config/setting_keys.dart';
 import 'package:fluffychat/config/themes.dart';
+import 'package:fluffychat/config/vent_chat_design.dart';
+import 'package:fluffychat/config/vent_integration.dart';
 import 'package:fluffychat/l10n/l10n.dart';
 import 'package:fluffychat/utils/adaptive_bottom_sheet.dart';
 import 'package:fluffychat/utils/date_time_extension.dart';
@@ -126,8 +128,11 @@ class Message extends StatelessWidget {
         previousEvent!.senderId == event.senderId &&
         previousEvent!.originServerTs.sameEnvironment(event.originServerTs);
 
+    // [vent] Non-null only when embedded in the Vent app.
+    final ventDesign = VentChatDesign.of(context);
+
     final textColor = ownMessage
-        ? theme.onBubbleColor
+        ? ventDesign?.onOwnBubble ?? theme.onBubbleColor
         : theme.colorScheme.onSurface;
 
     final linkColor = ownMessage
@@ -143,26 +148,56 @@ class Message extends StatelessWidget {
     final displayEvent = event.getDisplayEvent(timeline);
     const hardCorner = Radius.circular(3);
     const roundedCorner = Radius.circular(AppConfig.borderRadius);
-    final borderRadius = BorderRadius.only(
-      topLeft: !ownMessage && nextEventSameSender ? hardCorner : roundedCorner,
-      topRight: ownMessage && nextEventSameSender ? hardCorner : roundedCorner,
-      bottomLeft: !ownMessage ? hardCorner : roundedCorner,
-      bottomRight: ownMessage ? hardCorner : roundedCorner,
-    );
+    // [vent] Pill-like bubbles, every corner round, in the Vent design.
+    final borderRadius = ventDesign != null
+        ? BorderRadius.circular(ventDesign.bubbleRadius)
+        : BorderRadius.only(
+            topLeft: !ownMessage && nextEventSameSender
+                ? hardCorner
+                : roundedCorner,
+            topRight: ownMessage && nextEventSameSender
+                ? hardCorner
+                : roundedCorner,
+            bottomLeft: !ownMessage ? hardCorner : roundedCorner,
+            bottomRight: ownMessage ? hardCorner : roundedCorner,
+          );
     const avatarSize = Avatar.defaultSize;
+    // [vent] A shared event / moment / profile is a card of its own, not text
+    // inside a bubble.
+    final isHostEmbed =
+        ventDesign != null &&
+        // A reply keeps its bubble: the quoted message lives inside it.
+        event.inReplyToEventId(includingFallback: false) == null &&
+        !displayEvent.redacted &&
+        {
+          MessageTypes.Text,
+          MessageTypes.Notice,
+          MessageTypes.Emote,
+          MessageTypes.None,
+        }.contains(displayEvent.messageType) &&
+        VentIntegration.messageEmbedBuilder?.call(
+              context,
+              displayEvent.body,
+              textColor,
+            ) !=
+            null;
     final noBubble =
+        isHostEmbed ||
         ({
-          MessageTypes.Video,
-          MessageTypes.Image,
-          MessageTypes.Sticker,
-        }.contains(event.messageType) &&
-        event.fileDescription == null &&
-        !event.redacted);
+              MessageTypes.Video,
+              MessageTypes.Image,
+              MessageTypes.Sticker,
+            }.contains(event.messageType) &&
+            event.fileDescription == null &&
+            !event.redacted);
 
+    if (ventDesign != null && !ownMessage) {
+      color = ventDesign.incomingBubble;
+    }
     if (ownMessage) {
       color = displayEvent.status.isError
           ? Colors.redAccent
-          : theme.bubbleColor;
+          : ventDesign?.ownBubble ?? theme.bubbleColor;
     }
 
     final sentReactions = <String>{};
@@ -348,6 +383,7 @@ class Message extends StatelessWidget {
                                       ignore:
                                           noBubble ||
                                           !ownMessage ||
+                                          ventDesign != null ||
                                           MediaQuery.highContrastOf(context),
                                       scrollController: scrollController,
                                       child: Container(

@@ -23,7 +23,7 @@ Future<T?> showScaffoldDialog<T>({
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(AppConfig.borderRadius),
               color:
-                  containerColor ?? Theme.of(context).scaffoldBackgroundColor,
+                  containerColor ?? Theme.of(context).colorScheme.surface,
             ),
             clipBehavior: Clip.hardEdge,
             margin: const EdgeInsets.all(16),

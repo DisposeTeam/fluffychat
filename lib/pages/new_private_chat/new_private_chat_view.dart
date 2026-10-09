@@ -36,7 +36,7 @@ class NewPrivateChatView extends StatelessWidget {
         scrolledUnderElevation: 0,
         leading: const Center(child: BackButton()),
         title: Text(L10n.of(context).newChat),
-        backgroundColor: theme.scaffoldBackgroundColor,
+        backgroundColor: theme.colorScheme.surface,
         actions: [
           TextButton(
             onPressed: UrlLauncher(

@@ -6,6 +6,7 @@
 import 'package:fluffychat/config/app_config.dart';
 import 'package:fluffychat/config/setting_keys.dart';
 import 'package:fluffychat/config/themes.dart';
+import 'package:fluffychat/config/vent_chat_design.dart';
 import 'package:fluffychat/pages/chat_list/chat_list.dart';
 import 'package:fluffychat/pages/chat_list/navigation_rail.dart';
 import 'package:fluffychat/pages/chat_list/start_chat_fab.dart';
@@ -87,12 +88,18 @@ class ChatListView extends StatelessWidget {
                         : null,
                     color: oneColumnSpacesMode
                         ? Theme.of(context).colorScheme.surface
+                        // [vent] A colourless Material paints canvasColor, which
+                        // would hide the host backdrop.
+                        : VentChatDesign.of(context) != null
+                        ? Colors.transparent
                         : null,
                     child: ChatListViewBody(controller),
                   ),
                 ),
                 floatingActionButton:
                     !controller.isSearchMode &&
+                        // [vent] The compose button lives in the header.
+                        VentChatDesign.of(context) == null &&
                         controller.activeSpaceId == null &&
                         !FluffyThemes.isColumnMode(context)
                     ? ValueListenableBuilder(

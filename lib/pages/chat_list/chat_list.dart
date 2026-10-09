@@ -157,9 +157,8 @@ class ChatListController extends State<ChatList>
     context,
   ).client.rooms.where(VentIntegration.isRoomVisible).toList();
 
-  List<Room> get filteredRooms => visibleRooms
-      .where(getRoomFilterByActiveFilter(activeFilter))
-      .toList();
+  List<Room> get filteredRooms =>
+      visibleRooms.where(getRoomFilterByActiveFilter(activeFilter)).toList();
 
   bool isSearchMode = false;
   Future<QueryPublicRoomsResponse>? publicRoomsResponse;
@@ -438,6 +437,10 @@ class ChatListController extends State<ChatList>
         !VentIntegration.groupChatsEnabled) {
       activeFilter = ActiveFilter.allChats;
     }
+    // [vent] The embedded design has no filter chips at all, so a filter
+    // saved by the standalone app (Unread, Messages, a tag) would be
+    // unremovable here.
+    if (VentIntegration.embedded) activeFilter = ActiveFilter.allChats;
 
     if (AppSettings.debugPush.value) _processPushHelperCrashReport();
 

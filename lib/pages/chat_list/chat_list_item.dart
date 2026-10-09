@@ -4,8 +4,10 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 import 'package:fluffychat/config/app_config.dart';
+import 'package:fluffychat/config/vent_chat_design.dart';
 import 'package:fluffychat/l10n/l10n.dart';
 import 'package:fluffychat/pages/chat_list/unread_bubble.dart';
+import 'package:fluffychat/pages/chat_list/vent_chat_list_item.dart';
 import 'package:fluffychat/utils/matrix_sdk_extensions/matrix_locals.dart';
 import 'package:fluffychat/utils/room_status_extension.dart';
 import 'package:fluffychat/widgets/adaptive_dialogs/show_ok_cancel_alert_dialog.dart';
@@ -29,7 +31,7 @@ import '../../widgets/avatar.dart';
 /// The SDK already unwinds this way for M_NOT_FOUND and M_UNKNOWN — a room the
 /// server does not know about is simply marked as left locally. M_FORBIDDEN on
 /// an invite means the same thing here, so treat it the same.
-Future<void> _declineInvitation(Room room) async {
+Future<void> declineInvitation(Room room) async {
   try {
     await room.leave();
   } on MatrixException catch (e, s) {
@@ -67,6 +69,46 @@ class ChatListItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+
+    // [vent] Embedded in the Vent app the row is a glass card.
+    final ventDesign = VentChatDesign.of(context);
+    if (ventDesign != null) {
+      return VentChatListItem(
+        room: room,
+        design: ventDesign,
+        onTap: onTap,
+        onLongPress: onLongPress,
+        activeChat: activeChat,
+        filter: this.filter,
+        trailing: onForget != null
+            ? IconButton(
+                icon: const Icon(Icons.delete_outlined),
+                onPressed: onForget,
+              )
+            : room.membership == Membership.invite
+            ? IconButton(
+                tooltip: L10n.of(context).declineInvitation,
+                icon: const Icon(Icons.delete_forever_outlined),
+                color: theme.colorScheme.error,
+                onPressed: () async {
+                  final consent = await showOkCancelAlertDialog(
+                    context: context,
+                    title: L10n.of(context).declineInvitation,
+                    message: L10n.of(context).areYouSure,
+                    okLabel: L10n.of(context).yes,
+                    isDestructive: true,
+                  );
+                  if (consent != OkCancelResult.ok) return;
+                  if (!context.mounted) return;
+                  await showFutureLoadingDialog(
+                    context: context,
+                    future: () => declineInvitation(room),
+                  );
+                },
+              )
+            : null,
+      );
+    }
 
     final isMuted = room.pushRuleState != PushRuleState.notify;
     final typingText = room.getLocalizedTypingText(context);
@@ -415,7 +457,7 @@ class ChatListItem extends StatelessWidget {
                               if (!context.mounted) return;
                               await showFutureLoadingDialog(
                                 context: context,
-                                future: () => _declineInvitation(room),
+                                future: () => declineInvitation(room),
                               );
                             },
                           )

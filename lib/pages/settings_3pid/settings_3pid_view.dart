@@ -59,7 +59,7 @@ class Settings3PidView extends StatelessWidget {
                   children: [
                     ListTile(
                       leading: CircleAvatar(
-                        backgroundColor: theme.scaffoldBackgroundColor,
+                        backgroundColor: theme.colorScheme.surface,
                         foregroundColor: identifier.isEmpty
                             ? Colors.orange
                             : Colors.grey,
@@ -83,7 +83,7 @@ class Settings3PidView extends StatelessWidget {
                         itemCount: identifier.length,
                         itemBuilder: (BuildContext context, int i) => ListTile(
                           leading: CircleAvatar(
-                            backgroundColor: theme.scaffoldBackgroundColor,
+                            backgroundColor: theme.colorScheme.surface,
                             foregroundColor: Colors.grey,
                             child: Icon(identifier[i].iconData),
                           ),

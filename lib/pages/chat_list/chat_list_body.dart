@@ -4,6 +4,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 import 'package:fluffychat/config/setting_keys.dart';
+import 'package:fluffychat/config/vent_chat_design.dart';
 import 'package:fluffychat/config/vent_integration.dart';
 import 'package:fluffychat/l10n/l10n.dart';
 import 'package:fluffychat/pages/chat_list/chat_list.dart';
@@ -11,6 +12,7 @@ import 'package:fluffychat/pages/chat_list/chat_list_item.dart';
 import 'package:fluffychat/pages/chat_list/dummy_chat_list_item.dart';
 import 'package:fluffychat/pages/chat_list/search_title.dart';
 import 'package:fluffychat/pages/chat_list/space_view.dart';
+import 'package:fluffychat/pages/chat_list/vent_chat_list_header.dart';
 import 'package:fluffychat/utils/stream_extension.dart';
 import 'package:fluffychat/widgets/adaptive_dialogs/public_room_dialog.dart';
 import 'package:fluffychat/widgets/avatar.dart';
@@ -61,6 +63,7 @@ class ChatListViewBody extends StatelessWidget {
         .toList();
     final userSearchResult = controller.userSearchResult;
     const dummyChatCount = 4;
+    final ventDesign = VentChatDesign.of(context);
     final filter = controller.searchController.text.toLowerCase();
     return StreamBuilder(
       key: ValueKey(client.userID.toString()),
@@ -84,7 +87,11 @@ class ChatListViewBody extends StatelessWidget {
         return CustomScrollView(
           controller: controller.scrollController,
           slivers: [
-            ChatListHeader(controller: controller),
+            // [vent] Display title + glass buttons instead of the search field.
+            if (ventDesign != null && !controller.isSearchMode)
+              VentChatListHeader(controller: controller, design: ventDesign)
+            else
+              ChatListHeader(controller: controller),
             SliverList(
               delegate: SliverChildListDelegate([
                 if (controller.isSearchMode) ...[
@@ -134,7 +141,10 @@ class ChatListViewBody extends StatelessWidget {
                           ),
                   ),
                 ],
-                if (hasVisibleRooms && !controller.isSearchMode)
+                // [vent] The Vent design has no filter chips.
+                if (hasVisibleRooms &&
+                    !controller.isSearchMode &&
+                    ventDesign == null)
                   Container(
                     height: 36 + 8 + 8,
                     padding: EdgeInsets.symmetric(vertical: 8),

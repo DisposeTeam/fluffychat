@@ -6,6 +6,7 @@
 import 'package:collection/collection.dart';
 import 'package:fluffychat/config/setting_keys.dart';
 import 'package:fluffychat/config/themes.dart';
+import 'package:fluffychat/config/vent_chat_design.dart';
 import 'package:fluffychat/l10n/l10n.dart';
 import 'package:fluffychat/pages/chat/chat.dart';
 import 'package:fluffychat/pages/chat/encrpytion_info.dart';
@@ -38,6 +39,8 @@ class ChatEventList extends StatelessWidget {
     final theme = Theme.of(context);
 
     final colors = [theme.secondaryBubbleColor, theme.bubbleColor];
+    // [vent] Non-null only when embedded in the Vent app.
+    final ventDesign = VentChatDesign.of(context);
 
     final horizontalPadding = FluffyThemes.isColumnMode(context) ? 8.0 : 0.0;
 
@@ -166,7 +169,25 @@ class ChatEventList extends StatelessWidget {
                 child: Column(
                   mainAxisSize: .min,
                   children: [
-                    if (!isCollapsed && displayDate)
+                    // [vent] Plain centred text in the Vent design.
+                    if (!isCollapsed && displayDate && ventDesign != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 16.0, bottom: 12.0),
+                        child: Center(
+                          child: Text(
+                            ventDaySeparator(
+                              context,
+                              event.originServerTs,
+                              event.originServerTs.localizedDate(context),
+                            ),
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: theme.colorScheme.onSurface,
+                            ),
+                          ),
+                        ),
+                      )
+                    else if (!isCollapsed && displayDate)
                       Padding(
                         padding: const EdgeInsets.only(top: 8.0, bottom: 16.0),
                         child: Center(

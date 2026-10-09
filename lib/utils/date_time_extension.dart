@@ -3,6 +3,7 @@
 //
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
+import 'package:fluffychat/config/vent_integration.dart';
 import 'package:fluffychat/l10n/l10n.dart';
 import 'package:fluffychat/utils/platform_infos.dart';
 import 'package:flutter/material.dart';
@@ -36,15 +37,22 @@ extension DateTimeExtension on DateTime {
       prevTime.year == year && prevTime.month == month && prevTime.day == day;
 
   /// Returns a simple time String.
-  String localizedTimeOfDay(BuildContext context) => use24HourFormat(context)
-      ? DateFormat(
-          'HH:mm',
-          Localizations.localeOf(context).languageCode,
-        ).format(this)
-      : DateFormat(
-          'h:mm a',
-          Localizations.localeOf(context).languageCode,
-        ).format(this);
+  String localizedTimeOfDay(BuildContext context) => _vent(
+    VentDateStyle.timeOfDay,
+    () => use24HourFormat(context)
+        ? DateFormat(
+            'HH:mm',
+            Localizations.localeOf(context).languageCode,
+          ).format(this)
+        : DateFormat(
+            'h:mm a',
+            Localizations.localeOf(context).languageCode,
+          ).format(this),
+  );
+
+  /// [vent] The host's label for this date, else the stock `intl` one.
+  String _vent(VentDateStyle style, String Function() stock) =>
+      VentIntegration.formatDate(this, style, stock);
 
   /// Returns [localizedTimeOfDay()] if the ChatTime is today, the name of the week
   /// day if the ChatTime is this week and a date string else.
@@ -64,17 +72,26 @@ extension DateTimeExtension on DateTime {
     if (sameDay) {
       return localizedTimeOfDay(context);
     } else if (sameWeek) {
-      return DateFormat.E(
-        Localizations.localeOf(context).languageCode,
-      ).format(this);
+      return _vent(
+        VentDateStyle.weekdayShort,
+        () => DateFormat.E(
+          Localizations.localeOf(context).languageCode,
+        ).format(this),
+      );
     } else if (sameYear) {
-      return DateFormat.MMMd(
-        Localizations.localeOf(context).languageCode,
-      ).format(this);
+      return _vent(
+        VentDateStyle.monthDay,
+        () => DateFormat.MMMd(
+          Localizations.localeOf(context).languageCode,
+        ).format(this),
+      );
     }
-    return DateFormat.yMMMd(
-      Localizations.localeOf(context).languageCode,
-    ).format(this);
+    return _vent(
+      VentDateStyle.yearMonthDay,
+      () => DateFormat.yMMMd(
+        Localizations.localeOf(context).languageCode,
+      ).format(this),
+    );
   }
 
   DateTime get dateOnly => DateTime(year, month, day);
@@ -98,17 +115,26 @@ extension DateTimeExtension on DateTime {
     } else if (now.difference(date).inDays == 1) {
       return L10n.of(context).yesterday;
     } else if (sameWeek) {
-      return DateFormat.EEEE(
-        Localizations.localeOf(context).languageCode,
-      ).format(date);
+      return date._vent(
+        VentDateStyle.weekdayLong,
+        () => DateFormat.EEEE(
+          Localizations.localeOf(context).languageCode,
+        ).format(date),
+      );
     } else if (sameYear) {
-      return DateFormat.MMMMd(
-        Localizations.localeOf(context).languageCode,
-      ).format(date);
+      return date._vent(
+        VentDateStyle.monthDayLong,
+        () => DateFormat.MMMMd(
+          Localizations.localeOf(context).languageCode,
+        ).format(date),
+      );
     }
-    return DateFormat.yMMMMd(
-      Localizations.localeOf(context).languageCode,
-    ).format(date);
+    return date._vent(
+      VentDateStyle.yearMonthDayLong,
+      () => DateFormat.yMMMMd(
+        Localizations.localeOf(context).languageCode,
+      ).format(date),
+    );
   }
 
   /// If the DateTime is today, this returns [localizedTimeOfDay()], if not it also

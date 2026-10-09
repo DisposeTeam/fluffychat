@@ -4,9 +4,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 import 'package:fluffychat/config/themes.dart';
+import 'package:fluffychat/config/vent_chat_design.dart';
 import 'package:fluffychat/config/vent_integration.dart';
 import 'package:fluffychat/l10n/l10n.dart';
 import 'package:fluffychat/pages/chat/chat.dart';
+import 'package:fluffychat/utils/date_time_extension.dart';
 import 'package:fluffychat/utils/matrix_sdk_extensions/matrix_locals.dart';
 import 'package:fluffychat/utils/sync_status_localization.dart';
 import 'package:fluffychat/widgets/avatar.dart';
@@ -22,6 +24,8 @@ class ChatAppBarTitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final room = controller.room;
+    // [vent] Non-null only when embedded in the Vent app.
+    final ventDesign = VentChatDesign.of(context);
     if (controller.selectedEvents.isNotEmpty) {
       return Text(
         controller.selectedEvents.length.toString(),
@@ -53,7 +57,7 @@ class ChatAppBarTitle extends StatelessWidget {
               name: room.getLocalizedDisplayname(
                 MatrixLocals(L10n.of(context)),
               ),
-              size: 32,
+              size: ventDesign != null ? 40 : 32,
             ),
           ),
           const SizedBox(width: 12),
@@ -65,7 +69,10 @@ class ChatAppBarTitle extends StatelessWidget {
                   room.getLocalizedDisplayname(MatrixLocals(L10n.of(context))),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 16),
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: ventDesign != null ? FontWeight.w500 : null,
+                  ),
                 ),
                 StreamBuilder(
                   stream: room.client.onSyncStatus.stream,
@@ -85,13 +92,32 @@ class ChatAppBarTitle extends StatelessWidget {
                               userId: room.directChatMatrixID,
                               builder: (context, presence) {
                                 final statusMessage = presence?.statusMsg;
-                                final style = TextStyle(fontSize: 11);
+                                final style = TextStyle(
+                                  fontSize: ventDesign != null ? 13 : 11,
+                                  color: ventDesign != null
+                                      ? Theme.of(
+                                          context,
+                                        ).colorScheme.onSurfaceVariant
+                                      : null,
+                                );
                                 if (statusMessage != null) {
                                   return Text(statusMessage, style: style);
                                 }
                                 if (presence?.currentlyActive == true) {
                                   return Text(
                                     L10n.of(context).currentlyActive,
+                                    style: style,
+                                  );
+                                }
+                                // [vent] "Active 4h ago", when the server
+                                // sends presence at all.
+                                final lastActive =
+                                    presence?.lastActiveTimestamp;
+                                if (ventDesign != null && lastActive != null) {
+                                  return Text(
+                                    L10n.of(context).lastActiveAgo(
+                                      lastActive.localizedTimeShort(context),
+                                    ),
                                     style: style,
                                   );
                                 }
