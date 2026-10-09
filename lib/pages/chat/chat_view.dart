@@ -111,10 +111,7 @@ class ChatView extends StatelessWidget {
                     : theme.colorScheme.tertiaryContainer,
                 automaticallyImplyLeading: false,
                 // [vent] Frosted bar over the host backdrop, glass back button.
-                flexibleSpace:
-                    ventDesign != null &&
-                        controller.selectedEvents.isEmpty &&
-                        activeThreadId == null
+                flexibleSpace: ventDesign != null && activeThreadId == null
                     ? const VentGlassBlur(child: SizedBox.expand())
                     : null,
                 leadingWidth: ventDesign != null ? 62 : null,
@@ -423,7 +420,13 @@ class ChatView extends StatelessWidget {
                                                   .colorScheme
                                                   .tertiaryContainer
                                             : ventDesign != null
-                                            ? ventDesign.glassFill
+                                            // [vent] Blended over the page so
+                                            // the messages scrolling under the
+                                            // composer never show through.
+                                            ? Color.alphaBlend(
+                                                ventDesign.glassFill,
+                                                ventDesign.surface,
+                                              )
                                             : theme
                                                   .colorScheme
                                                   .surfaceContainer,

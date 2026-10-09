@@ -35,14 +35,21 @@ class ChatSearchImagesTab extends StatelessWidget {
     final borderRadius = BorderRadius.circular(AppConfig.borderRadius / 2);
     final theme = Theme.of(context);
 
-    final eventsByMonth = <DateTime, List<Event>>{};
+    // [vent] Grouped by the label shown, so the host's calendar (Jalali
+    // months do not line up with Gregorian ones) never splits or merges a
+    // header. Without a host the label is one per Gregorian month, as before.
+    String monthLabel(DateTime month) => VentIntegration.formatDate(
+      month,
+      VentDateStyle.yearMonth,
+      () => DateFormat.yMMMM(
+        Localizations.localeOf(context).languageCode,
+      ).format(month),
+    );
+    final eventsByMonth = <String, List<Event>>{};
     for (final event in events) {
-      final month = DateTime(
-        event.originServerTs.year,
-        event.originServerTs.month,
-      );
-      eventsByMonth[month] ??= [];
-      eventsByMonth[month]!.add(event);
+      final label = monthLabel(event.originServerTs);
+      eventsByMonth[label] ??= [];
+      eventsByMonth[label]!.add(event);
     }
     final eventsByMonthList = eventsByMonth.entries.toList();
 
@@ -73,14 +80,7 @@ class ChatSearchImagesTab extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Text(
-                    // [vent] The host's calendar, when it has one.
-                    VentIntegration.formatDate(
-                      eventsByMonthList[i].key,
-                      VentDateStyle.yearMonth,
-                      () => DateFormat.yMMMM(
-                        Localizations.localeOf(context).languageCode,
-                      ).format(eventsByMonthList[i].key),
-                    ),
+                    eventsByMonthList[i].key,
                     style: theme.textTheme.labelSmall,
                     textAlign: TextAlign.center,
                   ),

@@ -166,6 +166,8 @@ class Message extends StatelessWidget {
     // inside a bubble.
     final isHostEmbed =
         ventDesign != null &&
+        // A reply keeps its bubble: the quoted message lives inside it.
+        event.inReplyToEventId(includingFallback: false) == null &&
         !displayEvent.redacted &&
         {
           MessageTypes.Text,

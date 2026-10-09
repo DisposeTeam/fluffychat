@@ -161,11 +161,12 @@ String ventDaySeparator(BuildContext context, DateTime time, String relative) {
     () => DateFormat.EEEE(lang).format(time),
   );
   final today = DateTime.now();
-  final diff = DateTime(
+  // UTC midnights: a DST change must not make a day 23 or 25 hours long.
+  final diff = DateTime.utc(
     today.year,
     today.month,
     today.day,
-  ).difference(DateTime(time.year, time.month, time.day)).inDays;
+  ).difference(DateTime.utc(time.year, time.month, time.day)).inDays;
   if (diff == 0 || diff == 1) return '$day · $relative · $weekday';
   return relative == weekday ? '$day · $weekday' : relative;
 }
