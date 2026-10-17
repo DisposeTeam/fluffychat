@@ -142,7 +142,8 @@ class ChatInputRow extends StatelessWidget {
                     alignment: Alignment.center,
                     decoration: const BoxDecoration(),
                     clipBehavior: Clip.hardEdge,
-                    child: PopupMenuButton<AddPopupMenuActions>(
+                    // [vent] The host's pull-down menu, when it draws one.
+                    child: _AddMenuButton(
                       useRootNavigator: true,
                       icon: const Icon(Icons.add_circle_outline),
                       iconColor: theme.colorScheme.onPrimaryContainer,
@@ -454,6 +455,99 @@ class _ChatAccountPicker extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// [vent] The composer's "+": the host's pull-down menu when it draws one,
+/// otherwise the stock [PopupMenuButton] with exactly the arguments given.
+class _AddMenuButton extends StatelessWidget {
+  const _AddMenuButton({
+    required this.useRootNavigator,
+    required this.icon,
+    required this.iconColor,
+    required this.onSelected,
+    required this.itemBuilder,
+  });
+
+  final bool useRootNavigator;
+  final Widget icon;
+  final Color iconColor;
+  final void Function(AddPopupMenuActions) onSelected;
+  final PopupMenuItemBuilder<AddPopupMenuActions> itemBuilder;
+
+  @override
+  Widget build(BuildContext context) {
+    final pullDown = VentIntegration.pullDownMenuBuilder;
+    if (pullDown == null) {
+      return PopupMenuButton<AddPopupMenuActions>(
+        useRootNavigator: useRootNavigator,
+        icon: icon,
+        iconColor: iconColor,
+        onSelected: onSelected,
+        itemBuilder: itemBuilder,
+      );
+    }
+    final l10n = L10n.of(context);
+    VentChatMenuAction item(
+      AddPopupMenuActions action,
+      String label,
+      IconData icon, {
+      bool startsSection = false,
+    }) => VentChatMenuAction(
+      id: 'attach_${action.name}',
+      label: label,
+      icon: icon,
+      startsSection: startsSection,
+      onTap: () => onSelected(action),
+    );
+
+    return pullDown(
+      context,
+      anchor: (context, open) => IconButton(
+        icon: icon,
+        color: iconColor,
+        tooltip: l10n.sendFile,
+        onPressed: open,
+      ),
+      actions: () => [
+        item(AddPopupMenuActions.image, l10n.sendImage, Icons.photo_outlined),
+        item(
+          AddPopupMenuActions.video,
+          l10n.sendVideo,
+          Icons.video_camera_back_outlined,
+        ),
+        item(
+          AddPopupMenuActions.file,
+          l10n.sendFile,
+          Icons.attachment_outlined,
+        ),
+        if (PlatformInfos.isMobile) ...[
+          item(
+            AddPopupMenuActions.photoCamera,
+            l10n.takeAPhoto,
+            Icons.camera_alt_outlined,
+            startsSection: true,
+          ),
+          item(
+            AddPopupMenuActions.videoCamera,
+            l10n.recordAVideo,
+            Icons.videocam_outlined,
+          ),
+          item(
+            AddPopupMenuActions.location,
+            l10n.shareLocation,
+            Icons.location_on_outlined,
+            startsSection: true,
+          ),
+        ],
+        item(
+          AddPopupMenuActions.poll,
+          l10n.startPoll,
+          Icons.poll_outlined,
+          startsSection: !PlatformInfos.isMobile,
+        ),
+      ],
     );
   }
 }

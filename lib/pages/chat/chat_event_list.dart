@@ -7,6 +7,7 @@ import 'package:collection/collection.dart';
 import 'package:fluffychat/config/setting_keys.dart';
 import 'package:fluffychat/config/themes.dart';
 import 'package:fluffychat/config/vent_chat_design.dart';
+import 'package:fluffychat/config/vent_integration.dart';
 import 'package:fluffychat/l10n/l10n.dart';
 import 'package:fluffychat/pages/chat/chat.dart';
 import 'package:fluffychat/pages/chat/encrpytion_info.dart';
@@ -228,6 +229,9 @@ class ChatEventList extends StatelessWidget {
                       highlightMarker:
                           controller.scrollToEventIdMarker == event.eventId,
                       onSelect: controller.onSelectMessage,
+                      contextActions: VentIntegration.contextMenuBuilder == null
+                          ? null
+                          : () => controller.ventMessageActions(event),
                       scrollToEventId: controller.scrollToEventId,
                       longPressSelect: controller.selectedEvents.isNotEmpty,
                       selected: controller.selectedEvents.any(

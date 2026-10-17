@@ -117,6 +117,12 @@ abstract class VentIntegration {
   /// feature the host has no way to start.
   static bool groupChatsEnabled = true;
 
+  /// What to call [userId] when it has no display name: its local part in
+  /// Mio Chat, and the plain [userLabel] when embedded, where chat ids are
+  /// opaque (`@u<hash>`) and never shown.
+  static String nameFallback(String userId, String userLabel) =>
+      embedded ? userLabel : (userId.localpart ?? userId);
+
   static bool isRoomVisible(Room room) =>
       roomVisibilityFilter?.call(room) ?? true;
 
@@ -155,6 +161,89 @@ abstract class VentIntegration {
     VentDateStyle style,
     String Function() fallback,
   ) => dateFormatter?.call(date, style) ?? fallback();
+
+  /// Wraps a chat-list row so a long-press (or right-click) opens the host's
+  /// own menu for [room]; the host owns the items, since what a chat offers
+  /// (block, report, delete) is a product decision. [onOpen] opens the chat —
+  /// what tapping the lifted row does. Null keeps FluffyChat's stock menu.
+  static Widget Function(
+    BuildContext context, {
+    required Room room,
+    required Widget child,
+    required VoidCallback onOpen,
+  })?
+  chatListItemMenuBuilder;
+
+  /// Wraps [child] so a long-press (or right-click) opens the host's context
+  /// menu with [actions], asked for at the moment it opens. Null keeps the
+  /// stock gesture (FluffyChat's message long-press enters selection mode).
+  static Widget Function(
+    BuildContext context, {
+    required Widget child,
+    required List<VentChatMenuAction> Function() actions,
+    BorderRadius? borderRadius,
+  })?
+  contextMenuBuilder;
+
+  /// A button that opens the host's pull-down menu with [actions]. [anchor]
+  /// draws the button; wire its tap to `open`, which is null while there is
+  /// nothing to show. Null keeps FluffyChat's stock `PopupMenuButton`.
+  static Widget Function(
+    BuildContext context, {
+    required Widget Function(BuildContext context, VoidCallback? open) anchor,
+    required List<VentChatMenuAction> Function() actions,
+  })?
+  pullDownMenuBuilder;
+
+  /// The host's confirmation dialog, in place of the stock adaptive alert.
+  /// Resolves true only when the user confirmed.
+  static Future<bool> Function(
+    BuildContext context, {
+    required String title,
+    String? message,
+    required String okLabel,
+    required String cancelLabel,
+    required bool isDestructive,
+  })?
+  confirmHandler;
+
+  /// The host's action sheet, in place of the stock Material/Cupertino one:
+  /// pick one of [actions]. Resolves to the picked index, or null.
+  static Future<int?> Function(
+    BuildContext context, {
+    String? title,
+    String? message,
+    required List<VentChatMenuAction> actions,
+  })?
+  actionSheetHandler;
+}
+
+/// [vent] One row in a host-drawn menu or sheet.
+class VentChatMenuAction {
+  const VentChatMenuAction({
+    required this.label,
+    required this.onTap,
+    this.id,
+    this.icon,
+    this.isDestructive = false,
+    this.startsSection = false,
+  });
+
+  /// FluffyChat's own wording; the host may replace it by [id].
+  final String label;
+
+  /// A stable name for the action (`reply`, `copy`, `delete`…), so the host
+  /// can relabel it in its own voice and language. Null for one-off rows.
+  final String? id;
+
+  /// Runs after the menu has closed.
+  final VoidCallback onTap;
+
+  final IconData? icon;
+  final bool isDestructive;
+
+  /// Opens a new group of rows (a wider separator before it).
+  final bool startsSection;
 }
 
 /// The shapes of date label the chat shows. Each maps to the `intl` skeleton

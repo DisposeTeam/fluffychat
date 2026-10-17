@@ -13,6 +13,7 @@ import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:fluffychat/config/setting_keys.dart';
 import 'package:fluffychat/config/themes.dart';
+import 'package:fluffychat/config/vent_integration.dart';
 import 'package:fluffychat/l10n/l10n.dart';
 import 'package:fluffychat/pages/chat/chat_view.dart';
 import 'package:fluffychat/pages/chat/event_info_dialog.dart';
@@ -1497,6 +1498,136 @@ class ChatController extends State<ChatPageWithRoom>
 
   void showEventInfo([Event? event]) =>
       (event ?? selectedEvents.single).showInfoDialog(context);
+
+  /// [vent] What a long-press on [event] offers in the host's context menu:
+  /// the selection-mode actions, for this one message, without entering
+  /// selection mode. Each action selects just [event] and runs the stock
+  /// action, which clears the selection when it is done.
+  List<VentChatMenuAction> ventMessageActions(Event event) {
+    final l10n = L10n.of(context);
+    final previous = selectedEvents;
+    selectedEvents = [event];
+    try {
+      final sent = event.status.isSent;
+      final failed = event.status.isError;
+      final canWrite = !isArchived && room.canSendDefaultMessages;
+      final ownMessage = currentRoomBundle.any(
+        (c) => c?.userID == event.senderId,
+      );
+      final canPin = canPinSelectedEvents;
+      final pinned = room.pinnedEventIds.contains(event.eventId);
+      final canEdit = canEditSelectedEvents && !event.redacted;
+      final canSave = canSaveSelectedEvent;
+      final canRedact = canRedactSelectedEvents && !event.redacted;
+
+      void Function() on(void Function() action) => () {
+        if (!mounted) return;
+        setState(() => selectedEvents = [event]);
+        action();
+      };
+
+      return [
+        if (failed) ...[
+          VentChatMenuAction(
+            id: 'retry',
+            label: l10n.tryToSendAgain,
+            icon: Icons.send_outlined,
+            onTap: on(sendAgainAction),
+          ),
+          VentChatMenuAction(
+            id: 'delete',
+            label: l10n.delete,
+            icon: Icons.delete_outline_rounded,
+            isDestructive: true,
+            startsSection: true,
+            onTap: on(deleteErrorEventsAction),
+          ),
+        ] else if (!event.redacted) ...[
+          if (sent && canWrite) ...[
+            VentChatMenuAction(
+              id: 'reply',
+              label: l10n.reply,
+              icon: Icons.reply_rounded,
+              onTap: () => replyAction(replyTo: event),
+            ),
+            // Selecting just this message shows the inline reaction row.
+            VentChatMenuAction(
+              id: 'react',
+              label: l10n.customReaction,
+              icon: Icons.add_reaction_outlined,
+              onTap: on(() {}),
+            ),
+          ],
+          VentChatMenuAction(
+            id: 'copy',
+            label: l10n.copy,
+            icon: Icons.copy_rounded,
+            onTap: on(copyEventsAction),
+          ),
+          if (canEdit)
+            VentChatMenuAction(
+              id: 'edit',
+              label: l10n.edit,
+              icon: Icons.edit_outlined,
+              onTap: on(editSelectedEventAction),
+            ),
+          if (sent)
+            VentChatMenuAction(
+              id: 'forward',
+              label: l10n.forward,
+              icon: Icons.forward_outlined,
+              onTap: on(forwardEventsAction),
+            ),
+          if (canPin)
+            VentChatMenuAction(
+              id: pinned ? 'unpin' : 'pin',
+              label: pinned ? l10n.unpin : l10n.pinMessage,
+              icon: Icons.push_pin_outlined,
+              onTap: on(() {
+                pinEvent();
+                clearSelectedEvents();
+              }),
+            ),
+          if (canSave)
+            VentChatMenuAction(
+              id: 'save',
+              label: l10n.downloadFile,
+              icon: Icons.download_outlined,
+              onTap: on(() {
+                saveSelectedEvent(context);
+                clearSelectedEvents();
+              }),
+            ),
+          VentChatMenuAction(
+            id: 'select',
+            label: l10n.select,
+            icon: Icons.check_circle_outline_rounded,
+            onTap: on(() {}),
+          ),
+          if (canRedact)
+            VentChatMenuAction(
+              id: 'delete',
+              label: l10n.deleteMessage,
+              icon: Icons.delete_outline_rounded,
+              isDestructive: true,
+              startsSection: true,
+              onTap: on(redactEventsAction),
+            ),
+          if (sent && !ownMessage)
+            VentChatMenuAction(
+              id: 'report',
+              label: l10n.reportMessage,
+              icon: Icons.flag_outlined,
+              isDestructive: true,
+              startsSection: !canRedact,
+              onTap: on(reportEventAction),
+            ),
+        ],
+      ];
+    } finally {
+      selectedEvents = previous;
+    }
+  }
 
   Future<void> onPhoneButtonTap() async {
     // VoIP required Android SDK 21

@@ -6,6 +6,7 @@
 import 'dart:convert';
 
 import 'package:fluffychat/config/app_config.dart';
+import 'package:fluffychat/config/vent_integration.dart';
 import 'package:fluffychat/l10n/l10n.dart';
 import 'package:fluffychat/utils/adaptive_bottom_sheet.dart';
 import 'package:fluffychat/utils/date_time_extension.dart';
@@ -54,8 +55,11 @@ class EventInfoDialog extends StatelessWidget {
               presenceUserId: event.senderId,
             ),
             title: Text(L10n.of(context).sender),
+            // [vent] Embedded chat ids are never shown.
             subtitle: Text(
-              '${event.senderFromMemoryOrFallback.calcDisplayname()} [${event.senderId}]',
+              VentIntegration.embedded
+                  ? event.senderFromMemoryOrFallback.calcDisplayname()
+                  : '${event.senderFromMemoryOrFallback.calcDisplayname()} [${event.senderId}]',
             ),
           ),
           ListTile(
@@ -66,23 +70,27 @@ class EventInfoDialog extends StatelessWidget {
             title: Text('${L10n.of(context).status}:'),
             subtitle: Text(event.status.name),
           ),
-          ListTile(title: Text('${L10n.of(context).sourceCode}:')),
-          Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: Material(
-              borderRadius: BorderRadius.circular(AppConfig.borderRadius),
-              color: theme.colorScheme.surfaceContainer,
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                scrollDirection: Axis.horizontal,
-                child: SelectableText(
-                  prettyJson(MatrixEvent.fromJson(event.toJson())),
-                  style: TextStyle(color: theme.colorScheme.onSurface),
+          // [vent] The raw event source is a developer tool, not product UI.
+          if (!VentIntegration.embedded) ...[
+            ListTile(title: Text('${L10n.of(context).sourceCode}:')),
+            Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Material(
+                borderRadius: BorderRadius.circular(AppConfig.borderRadius),
+                color: theme.colorScheme.surfaceContainer,
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(16),
+                  scrollDirection: Axis.horizontal,
+                  child: SelectableText(
+                    prettyJson(MatrixEvent.fromJson(event.toJson())),
+                    style: TextStyle(color: theme.colorScheme.onSurface),
+                  ),
                 ),
               ),
             ),
-          ),
-          if (event.messageType != MessageTypes.BadEncrypted &&
+          ],
+          if (!VentIntegration.embedded &&
+              event.messageType != MessageTypes.BadEncrypted &&
               originalSource != null) ...[
             ListTile(title: Text('${L10n.of(context).encrypted}:')),
             Padding(

@@ -5,6 +5,7 @@
 
 import 'package:collection/collection.dart';
 import 'package:fluffychat/config/setting_keys.dart';
+import 'package:fluffychat/config/vent_integration.dart';
 import 'package:fluffychat/l10n/l10n.dart';
 import 'package:fluffychat/utils/custom_http_client.dart';
 import 'package:fluffychat/utils/custom_image_resizer.dart';
@@ -135,6 +136,10 @@ abstract class ClientManager {
         AuthenticationTypes.sso,
       },
       nativeImplementations: nativeImplementations,
+      // [vent] Embedded chat ids are opaque (`@u<hash>`) and never follow a
+      // rename, so a person without a display name reads as "User" rather than
+      // as their id. Mio Chat keeps the stock local-part fallback.
+      mxidLocalPartFallback: !VentIntegration.embedded,
       defaultNetworkRequestTimeout: const Duration(minutes: 30),
       enableDehydratedDevices: true,
       shareKeysWith:
