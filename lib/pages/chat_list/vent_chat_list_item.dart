@@ -4,6 +4,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 import 'package:fluffychat/config/vent_chat_design.dart';
+import 'package:fluffychat/config/vent_integration.dart';
 import 'package:fluffychat/l10n/l10n.dart';
 import 'package:fluffychat/utils/date_time_extension.dart';
 import 'package:fluffychat/utils/matrix_sdk_extensions/matrix_locals.dart';
@@ -63,12 +64,20 @@ class VentChatListItem extends StatelessWidget {
     final withSender =
         !isDirectChat || directChatMatrixId != room.lastEvent?.senderId;
 
+    final menuBuilder = VentIntegration.chatListItemMenuBuilder;
     return FutureBuilder(
       future: room.name.isEmpty ? room.loadHeroUsers() : null,
       builder: (context, _) => VentChatCard(
         design: design,
         onTap: onTap,
-        onLongPress: onLongPress == null ? null : () => onLongPress!(context),
+        // [vent] The host's menu, when it has one, replaces the stock one.
+        onLongPress: menuBuilder != null || onLongPress == null
+            ? null
+            : () => onLongPress!(context),
+        menuWrapper: menuBuilder == null
+            ? null
+            : (card) =>
+                  menuBuilder(context, room: room, child: card, onOpen: onTap),
         selected: activeChat,
         unread: unread,
         trailing: trailing,
@@ -76,7 +85,7 @@ class VentChatListItem extends StatelessWidget {
           mxContent: room.avatar,
           name: displayname,
           size: 40,
-          onTap: () => onLongPress?.call(context),
+          onTap: menuBuilder != null ? null : () => onLongPress?.call(context),
         ),
         name: displayname,
         muted: room.pushRuleState != PushRuleState.notify,
@@ -157,6 +166,7 @@ class VentChatCard extends StatelessWidget {
     this.muted = false,
     this.pinned = false,
     this.trailing,
+    this.menuWrapper,
   });
 
   final VentChatDesign design;
@@ -176,6 +186,9 @@ class VentChatCard extends StatelessWidget {
   /// Replaces the unread dot (the invite-decline button).
   final Widget? trailing;
 
+  /// [vent] Wraps the card in the host's long-press menu.
+  final Widget Function(Widget card)? menuWrapper;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -185,110 +198,113 @@ class VentChatCard extends StatelessWidget {
       fontSize: 14,
       color: unread ? onSurface : muteColor,
     );
+    final wrap = menuWrapper ?? (Widget card) => card;
     return Padding(
       padding: const EdgeInsetsDirectional.fromSTEB(16, 4, 16, 4),
-      child: Material(
-        color: selected ? design.glassBorder : design.glassFill,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(design.cardRadius),
-          side: BorderSide(color: design.glassBorder),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          onLongPress: onLongPress,
-          child: Padding(
-            padding: const EdgeInsetsDirectional.fromSTEB(12, 14, 16, 14),
-            child: Row(
-              children: [
-                avatar,
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Row(
-                        children: [
-                          Flexible(
-                            child: Text(
-                              name,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w500,
-                                color: onSurface,
-                              ),
-                            ),
-                          ),
-                          if (muted)
-                            Padding(
-                              padding: const EdgeInsetsDirectional.only(
-                                start: 4,
-                              ),
-                              child: Icon(
-                                Icons.notifications_off_outlined,
-                                size: 14,
-                                color: muteColor,
-                              ),
-                            ),
-                          if (pinned)
-                            Padding(
-                              padding: const EdgeInsetsDirectional.only(
-                                start: 4,
-                              ),
-                              child: Icon(
-                                Icons.push_pin_outlined,
-                                size: 14,
-                                color: muteColor,
-                              ),
-                            ),
-                        ],
-                      ),
-                      const SizedBox(height: 2),
-                      subtitle(subtitleStyle),
-                    ],
-                  ),
-                ),
-                // The end edge (left in RTL): the time of the last message, and
-                // under it the unread dot (or the invite's decline button). The
-                // message text takes whatever width is left, so the time sits
-                // at the same place on every row.
-                if (time != null || trailing != null || unread)
-                  Padding(
-                    padding: const EdgeInsetsDirectional.only(start: 12),
+      child: wrap(
+        Material(
+          color: selected ? design.glassBorder : design.glassFill,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(design.cardRadius),
+            side: BorderSide(color: design.glassBorder),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: onTap,
+            onLongPress: onLongPress,
+            child: Padding(
+              padding: const EdgeInsetsDirectional.fromSTEB(12, 14, 16, 14),
+              child: Row(
+                children: [
+                  avatar,
+                  const SizedBox(width: 12),
+                  Expanded(
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        if (time != null)
-                          Text(
-                            time!,
-                            maxLines: 1,
-                            softWrap: false,
-                            style: subtitleStyle.copyWith(
-                              fontSize: 13,
-                              color: muteColor,
+                        Row(
+                          children: [
+                            Flexible(
+                              child: Text(
+                                name,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w500,
+                                  color: onSurface,
+                                ),
+                              ),
                             ),
-                          ),
-                        if (trailing != null)
-                          trailing!
-                        else if (unread) ...[
-                          if (time != null) const SizedBox(height: 6),
-                          Container(
-                            width: 10,
-                            height: 10,
-                            decoration: BoxDecoration(
-                              color: design.unreadDot,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                        ],
+                            if (muted)
+                              Padding(
+                                padding: const EdgeInsetsDirectional.only(
+                                  start: 4,
+                                ),
+                                child: Icon(
+                                  Icons.notifications_off_outlined,
+                                  size: 14,
+                                  color: muteColor,
+                                ),
+                              ),
+                            if (pinned)
+                              Padding(
+                                padding: const EdgeInsetsDirectional.only(
+                                  start: 4,
+                                ),
+                                child: Icon(
+                                  Icons.push_pin_outlined,
+                                  size: 14,
+                                  color: muteColor,
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 2),
+                        subtitle(subtitleStyle),
                       ],
                     ),
                   ),
-              ],
+                  // The end edge (left in RTL): the time of the last message, and
+                  // under it the unread dot (or the invite's decline button). The
+                  // message text takes whatever width is left, so the time sits
+                  // at the same place on every row.
+                  if (time != null || trailing != null || unread)
+                    Padding(
+                      padding: const EdgeInsetsDirectional.only(start: 12),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          if (time != null)
+                            Text(
+                              time!,
+                              maxLines: 1,
+                              softWrap: false,
+                              style: subtitleStyle.copyWith(
+                                fontSize: 13,
+                                color: muteColor,
+                              ),
+                            ),
+                          if (trailing != null)
+                            trailing!
+                          else if (unread) ...[
+                            if (time != null) const SizedBox(height: 6),
+                            Container(
+                              width: 10,
+                              height: 10,
+                              decoration: BoxDecoration(
+                                color: design.unreadDot,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
         ),

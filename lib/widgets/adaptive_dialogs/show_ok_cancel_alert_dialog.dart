@@ -3,6 +3,7 @@
 //
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
+import 'package:fluffychat/config/vent_integration.dart';
 import 'package:fluffychat/l10n/l10n.dart';
 import 'package:fluffychat/utils/url_launcher.dart';
 import 'package:fluffychat/widgets/adaptive_dialogs/adaptive_dialog_action.dart';
@@ -12,6 +13,38 @@ import 'package:flutter_linkify/flutter_linkify.dart';
 enum OkCancelResult { ok, cancel }
 
 Future<OkCancelResult?> showOkCancelAlertDialog({
+  required BuildContext context,
+  required String title,
+  String? message,
+  String? okLabel,
+  String? cancelLabel,
+  bool isDestructive = false,
+  bool useRootNavigator = true,
+}) {
+  // [vent] Inside a host app, its own confirmation dialog.
+  final confirm = VentIntegration.confirmHandler;
+  if (confirm == null) {
+    return _stockOkCancelAlertDialog(
+      context: context,
+      title: title,
+      message: message,
+      okLabel: okLabel,
+      cancelLabel: cancelLabel,
+      isDestructive: isDestructive,
+      useRootNavigator: useRootNavigator,
+    );
+  }
+  return confirm(
+    context,
+    title: title,
+    message: message,
+    okLabel: okLabel ?? L10n.of(context).ok,
+    cancelLabel: cancelLabel ?? L10n.of(context).cancel,
+    isDestructive: isDestructive,
+  ).then((ok) => ok ? OkCancelResult.ok : OkCancelResult.cancel);
+}
+
+Future<OkCancelResult?> _stockOkCancelAlertDialog({
   required BuildContext context,
   required String title,
   String? message,

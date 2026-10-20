@@ -3,6 +3,7 @@
 //
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
+import 'package:fluffychat/config/vent_integration.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -14,6 +15,24 @@ Future<T?> showModalActionPopup<T>({
   String? cancelLabel,
   bool useRootNavigator = true,
 }) {
+  // [vent] Inside a host app, its own action sheet.
+  final sheet = VentIntegration.actionSheetHandler;
+  if (sheet != null) {
+    return sheet(
+      context,
+      title: title,
+      message: message,
+      actions: [
+        for (final action in actions)
+          VentChatMenuAction(
+            label: action.label,
+            icon: action.icon?.icon,
+            isDestructive: action.isDestructive,
+            onTap: () {},
+          ),
+      ],
+    ).then((index) => index == null ? null : actions[index].value);
+  }
   final theme = Theme.of(context);
 
   switch (theme.platform) {

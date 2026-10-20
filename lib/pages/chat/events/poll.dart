@@ -5,6 +5,7 @@
 
 import 'package:async/async.dart';
 import 'package:fluffychat/config/app_config.dart';
+import 'package:fluffychat/config/vent_integration.dart';
 import 'package:fluffychat/l10n/l10n.dart';
 import 'package:fluffychat/utils/url_launcher.dart';
 import 'package:fluffychat/widgets/avatar.dart';
@@ -156,7 +157,10 @@ class PollWidget extends StatelessWidget {
                                       mxContent: user?.avatarUrl,
                                       name:
                                           user?.calcDisplayname() ??
-                                          userId.localpart,
+                                          VentIntegration.nameFallback(
+                                            userId,
+                                            L10n.of(context).user,
+                                          ),
                                       size: 12,
                                     ),
                                   );

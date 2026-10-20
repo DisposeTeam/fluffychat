@@ -179,7 +179,13 @@ class ChatView extends StatelessWidget {
                         tooltip: L10n.of(context).redactMessage,
                         onPressed: controller.redactEventsAction,
                       ),
-                    if (controller.selectedEvents.length == 1)
+                    // [vent] The host's pull-down, without the raw-JSON
+                    // "Message info".
+                    if (controller.selectedEvents.length == 1 &&
+                        VentIntegration.pullDownMenuBuilder != null)
+                      _VentSelectionMenu(controller: controller),
+                    if (controller.selectedEvents.length == 1 &&
+                        VentIntegration.pullDownMenuBuilder == null)
                       PopupMenuButton<_EventContextAction>(
                         useRootNavigator: true,
                         onSelected: (action) {
@@ -516,6 +522,59 @@ class ChatView extends StatelessWidget {
           },
         ),
       ),
+    );
+  }
+}
+
+/// [vent] The selection bar's "…" as the host's pull-down menu: the stock
+/// items minus "Message info", which shows the event's raw source.
+class _VentSelectionMenu extends StatelessWidget {
+  const _VentSelectionMenu({required this.controller});
+
+  final ChatController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = L10n.of(context);
+    return VentIntegration.pullDownMenuBuilder!(
+      context,
+      anchor: (context, open) => IconButton(
+        icon: const Icon(Icons.more_horiz_rounded),
+        tooltip: MaterialLocalizations.of(context).showMenuTooltip,
+        onPressed: open,
+      ),
+      actions: () {
+        final selected = controller.selectedEvents.singleOrNull;
+        if (selected == null) return const [];
+        final pinned = controller.room.pinnedEventIds.contains(
+          selected.eventId,
+        );
+        return [
+          if (controller.canPinSelectedEvents)
+            VentChatMenuAction(
+              id: pinned ? 'unpin' : 'pin',
+              label: pinned ? l10n.unpin : l10n.pinMessage,
+              icon: Icons.push_pin_outlined,
+              onTap: controller.pinEvent,
+            ),
+          if (controller.canSaveSelectedEvent)
+            VentChatMenuAction(
+              id: 'save',
+              label: l10n.downloadFile,
+              icon: Icons.download_outlined,
+              onTap: () => controller.saveSelectedEvent(context),
+            ),
+          if (selected.status.isSent)
+            VentChatMenuAction(
+              id: 'report',
+              label: l10n.reportMessage,
+              icon: Icons.flag_outlined,
+              isDestructive: true,
+              startsSection: true,
+              onTap: controller.reportEventAction,
+            ),
+        ];
+      },
     );
   }
 }

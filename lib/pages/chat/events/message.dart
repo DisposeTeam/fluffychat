@@ -55,6 +55,11 @@ class Message extends StatelessWidget {
   final bool isCollapsed;
   final Set<String> bigEmojis;
 
+  /// [vent] The host context menu's actions for this message. When set and
+  /// the host draws menus, a long-press opens that menu instead of entering
+  /// selection mode, and a tap no longer selects.
+  final List<VentChatMenuAction> Function()? contextActions;
+
   const Message(
     this.event, {
     this.nextEvent,
@@ -79,6 +84,7 @@ class Message extends StatelessWidget {
     this.onExpand,
     required this.enterThread,
     this.isCollapsed = false,
+    this.contextActions,
     super.key,
   });
 
@@ -191,6 +197,12 @@ class Message extends StatelessWidget {
             event.fileDescription == null &&
             !event.redacted);
 
+    // [vent] The host's long-press menu on the bubble, in place of selection.
+    final hostMenu =
+        VentIntegration.contextMenuBuilder != null &&
+        contextActions != null &&
+        !event.redacted;
+
     if (ventDesign != null && !ownMessage) {
       color = ventDesign.incomingBubble;
     }
@@ -288,7 +300,9 @@ class Message extends StatelessWidget {
                     child: InkWell(
                       hoverColor: longPressSelect ? Colors.transparent : null,
                       enableFeedback: !selected,
-                      onTap: longPressSelect ? null : () => onSelect(event),
+                      onTap: longPressSelect || hostMenu
+                          ? null
+                          : () => onSelect(event),
                       borderRadius: BorderRadius.circular(
                         AppConfig.borderRadius / 2,
                       ),
@@ -336,11 +350,20 @@ class Message extends StatelessWidget {
                               return Avatar(
                                 mxContent: user.avatarUrl,
                                 name: user.calcDisplayname(),
-                                onTap: () => showMemberActionsPopupMenu(
-                                  context: context,
-                                  user: user,
-                                  onMention: onMention,
-                                ),
+                                onTap: () {
+                                  // [vent] A person is the host's profile.
+                                  if (VentIntegration.handleMemberTap(
+                                    context,
+                                    user,
+                                  )) {
+                                    return;
+                                  }
+                                  showMemberActionsPopupMenu(
+                                    context: context,
+                                    user: user,
+                                    onMention: onMention,
+                                  );
+                                },
                                 size: avatarSize,
                                 presenceUserId: user.stateKey,
                                 presenceBackgroundColor: wallpaperMode
@@ -359,7 +382,7 @@ class Message extends StatelessWidget {
                               alignment: alignment,
                               padding: const EdgeInsets.only(left: 8),
                               child: GestureDetector(
-                                onLongPress: longPressSelect
+                                onLongPress: longPressSelect || hostMenu
                                     ? null
                                     : () {
                                         HapticFeedback.heavyImpact();
@@ -370,6 +393,10 @@ class Message extends StatelessWidget {
                                     event.transactionId ?? event.eventId,
                                   ),
                                   animateIn: animateIn,
+                                  menuActions: hostMenu && !longPressSelect
+                                      ? contextActions
+                                      : null,
+                                  menuRadius: borderRadius,
                                   child: Container(
                                     decoration: BoxDecoration(
                                       color: noBubble
@@ -972,7 +999,18 @@ class BubblePainter extends CustomPainter {
 class _AnimateIn extends StatefulWidget {
   final bool animateIn;
   final Widget child;
-  const _AnimateIn({required this.animateIn, required this.child, super.key});
+
+  // [vent] When set, the bubble opens the host's context menu on long-press.
+  final List<VentChatMenuAction> Function()? menuActions;
+  final BorderRadius? menuRadius;
+
+  const _AnimateIn({
+    required this.animateIn,
+    required this.child,
+    this.menuActions,
+    this.menuRadius,
+    super.key,
+  });
 
   @override
   State<_AnimateIn> createState() => __AnimateInState();
@@ -983,7 +1021,17 @@ class __AnimateInState extends State<_AnimateIn> {
 
   @override
   Widget build(BuildContext context) {
-    if (!widget.animateIn) return widget.child;
+    final menuActions = widget.menuActions;
+    final menuBuilder = VentIntegration.contextMenuBuilder;
+    final child = menuActions == null || menuBuilder == null
+        ? widget.child
+        : menuBuilder(
+            context,
+            child: widget.child,
+            actions: menuActions,
+            borderRadius: widget.menuRadius,
+          );
+    if (!widget.animateIn) return child;
     if (!_animationFinished) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         setState(() {
@@ -995,7 +1043,7 @@ class __AnimateInState extends State<_AnimateIn> {
     return AnimatedSize(
       duration: FluffyThemes.animationDuration,
       curve: FluffyThemes.animationCurve,
-      child: _animationFinished ? widget.child : const SizedBox.shrink(),
+      child: _animationFinished ? child : const SizedBox.shrink(),
     );
   }
 }

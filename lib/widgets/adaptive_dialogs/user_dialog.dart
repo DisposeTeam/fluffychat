@@ -4,6 +4,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 import 'package:fluffychat/config/themes.dart';
+import 'package:fluffychat/config/vent_integration.dart';
 import 'package:fluffychat/l10n/l10n.dart';
 import 'package:fluffychat/utils/date_time_extension.dart';
 import 'package:fluffychat/utils/fluffy_share.dart';
@@ -48,8 +49,7 @@ class UserDialog extends StatelessWidget {
     final directChatRoomId = client.getDirectChatFromUserId(profile.userId);
     final displayname =
         profile.displayName ??
-        profile.userId.localpart ??
-        L10n.of(context).user;
+        VentIntegration.nameFallback(profile.userId, L10n.of(context).user);
     var copied = false;
     final theme = Theme.of(context);
     final avatar = profile.avatarUrl;

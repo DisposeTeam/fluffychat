@@ -6,6 +6,7 @@
 import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'package:fluffychat/config/app_config.dart';
 import 'package:fluffychat/config/setting_keys.dart';
+import 'package:fluffychat/config/vent_integration.dart';
 import 'package:fluffychat/l10n/l10n.dart';
 import 'package:fluffychat/pages/chat/trust_user_key_dialog.dart';
 import 'package:fluffychat/utils/markdown_context_builder.dart';
@@ -309,11 +310,22 @@ class InputBar extends StatelessWidget {
           mxContent: url,
           name:
               suggestion.tryGet<String>('displayname') ??
-              suggestion.tryGet<String>('mxid'),
+              VentIntegration.nameFallback(
+                suggestion['mxid'] ?? '',
+                L10n.of(context).user,
+              ),
           size: size,
           client: client,
         ),
-        title: Text(suggestion['displayname'] ?? suggestion['mxid']!),
+        title: Text(
+          suggestion['type'] == 'user'
+              ? suggestion['displayname'] ??
+                    VentIntegration.nameFallback(
+                      suggestion['mxid']!,
+                      L10n.of(context).user,
+                    )
+              : suggestion['displayname'] ?? suggestion['mxid']!,
+        ),
       );
     }
     return const SizedBox.shrink();

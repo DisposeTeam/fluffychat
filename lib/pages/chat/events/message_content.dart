@@ -287,8 +287,10 @@ class RedactionWidget extends StatelessWidget {
         final reason = event.redactedBecause?.content.tryGet<String>('reason');
         final redactedBy =
             snapshot.data?.calcDisplayname() ??
-            event.redactedBecause?.senderId.localpart ??
-            L10n.of(context).user;
+            VentIntegration.nameFallback(
+              event.redactedBecause?.senderId ?? '',
+              L10n.of(context).user,
+            );
         return _ButtonContent(
           label: reason == null
               ? L10n.of(context).redactedBy(redactedBy)
